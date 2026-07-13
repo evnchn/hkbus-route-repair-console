@@ -265,15 +265,25 @@ function panel(){
   document.getElementById('panel').innerHTML=`
     <div class=gist>
       <div class=gh>The gist</div>
-      <p><b>#272</b> <span class=amp>amputates</span> CSDI's bad limbs — cheap and safe, but rough, and it
-      only reaches the <b>termini</b>. <span class=amp>Repairing</span> CSDI is a dead end: you can't chord
-      your way onto a road the data never drove — <b>route 15</b> never walks the right one.
-      <b class=pf>pfaedle</b> re-derives every shape from OpenStreetMap, matches the official line across
-      <b>all</b> classes, and map-matches the <b>whole fleet in ~40&nbsp;s</b>. So: pfaedle all the way.</p>
+      <p><b>#272</b> <span class=amp>amputates</span> CSDI's worst loops — a <b>cosmetic hotfix</b> so a
+      runaway 8&nbsp;km loop doesn't shadow the real path on the map; not a repair, and only at the
+      <b>termini</b>. <span class=amp>Repairing</span> CSDI at all is a dead end: it was never
+      GPS-observed — it's <b>routed between stops</b> (see below), so it inherits the router's detours
+      and loops — <b>route 15</b> never walks the right road. <b class=pf>pfaedle</b> re-derives every
+      shape from OpenStreetMap and matches the official line across <b>all</b> classes — whole fleet in
+      <b>~40&nbsp;s</b>. So: pfaedle in the scraper; amputation stays only as first-aid.</p>
     </div>
     <div class=psec><h2>Candidate repairs — click to focus</h2>${cards}</div>
     <div class=psec><h2>How “${NAME[focus].split('·')[0].trim()}” works</h2>
       <pre class=pc>${PC[focus]||'<span class=cm># the raw government waypoints, unmodified</span>'}</pre></div>
+    <div class=psec><h2>Why not just fix CSDI?</h2>
+      <p style="margin:0;font-size:12px;line-height:1.5;color:var(--mut)">Because CSDI was never
+      <b style="color:var(--tx)">observed</b>. On the To&nbsp;Kwa&nbsp;Wan corridor, unrelated routes
+      <b style="color:var(--tx)">6C and 75X share 427 consecutive byte-identical vertices over
+      11.6&nbsp;km</b> — every ~27&nbsp;m, to the metre. GPS never repeats a point across trips; only a
+      router on a shared road graph does. So CSDI is <b style="color:var(--tx)">synthesised by routing
+      between stops</b>, and inherits that router's detours &amp; loops. You can't patch your way onto a
+      road the data never drove — re-derive it with a real map-matcher.</p></div>
     <div class=psec><h2>Ground truth — official ${r.co==='ctb'?'CTB':'KMB'} line</h2>
       <div id=orcbox></div></div>
     <div class=foot>Repairs run 1:1 from the real PRs. Lengths are geometry only; the official line
