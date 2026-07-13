@@ -59,6 +59,12 @@ header .legend b{font-size:11px;text-transform:uppercase;letter-spacing:.4px;fon
 #panel{background:var(--surf);border-left:1px solid var(--line);overflow-y:auto}
 .psec{padding:13px 15px;border-bottom:1px solid var(--line)}
 .psec h2{font:600 11px/1 Oswald;letter-spacing:1px;text-transform:uppercase;color:var(--dim);margin:0 0 10px}
+.gist{padding:13px 15px;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(50,215,75,.09),rgba(50,215,75,.02))}
+.gist .gh{font:600 11px/1 Oswald;letter-spacing:1.5px;text-transform:uppercase;color:var(--pfaedle);margin-bottom:7px}
+.gist p{margin:0;font-size:12.5px;line-height:1.55;color:var(--tx)}
+.gist .amp{color:var(--chord);font-weight:600;font-style:italic}
+.gist .pf{color:var(--pfaedle)}
 /* candidate cards */
 .cand{border:1px solid var(--line);border-radius:9px;padding:10px 11px;margin-bottom:9px;cursor:pointer;
   background:var(--surf);transition:border-color .12s}
@@ -135,8 +141,17 @@ route stop→stop along real roads
    (hidden-markov map-match, shortest legal path)
 <span class=cm># fixes any class — but replaces GOOD geometry too</span>`};
 let R=[], ORC={}, cur=0, focus='pfaedle';
-const vis={csdi:1,chord:1,deloop:1,pfaedle:1,oracle:1,stops:1};
+const vis={csdi:1,chord:0,pfaedle:1,oracle:1,stops:0};
 let orcOpacity=0.9;
+// focusing a candidate auto-selects the layers that best tell its story
+// (the candidate itself + the raw CSDI baseline + the official-line arbiter)
+const AUTO={
+  csdi:    {csdi:1,chord:0,pfaedle:0,oracle:1,stops:0},
+  chord:   {csdi:1,chord:1,pfaedle:0,oracle:1,stops:0},
+  pfaedle: {csdi:1,chord:0,pfaedle:1,oracle:1,stops:0},
+};
+function autoLayers(k){const a=AUTO[k]||AUTO.pfaedle;for(const key in a)vis[key]=a[key];}
+function syncLegend(){for(const el of document.querySelectorAll('.lgi'))el.classList.toggle('off',!vis[el.dataset.c]);}
 let map, layers={};
 const km=m=>(m/1000).toFixed(1)+' km';
 const ll=c=>c.map(p=>[p[1],p[0]]);
@@ -184,7 +199,7 @@ function init(){
 }
 function draw(){
   document.querySelectorAll('.blade').forEach(b=>b.classList.toggle('sel',+b.dataset.i===cur));
-  paint(true); panel();
+  paint(true); panel(); syncLegend();
 }
 function paint(fit){
   for(const k in layers) map.removeLayer(layers[k]); layers={};
@@ -248,6 +263,14 @@ function panel(){
       <div class="verdict ${vc}">${vt}</div></div>`;
   }
   document.getElementById('panel').innerHTML=`
+    <div class=gist>
+      <div class=gh>The gist</div>
+      <p><b>#272</b> <span class=amp>amputates</span> CSDI's bad limbs — cheap and safe, but rough, and it
+      only reaches the <b>termini</b>. <span class=amp>Repairing</span> CSDI is a dead end: you can't chord
+      your way onto a road the data never drove — <b>route 15</b> never walks the right one.
+      <b class=pf>pfaedle</b> re-derives every shape from OpenStreetMap, matches the official line across
+      <b>all</b> classes, and map-matches the <b>whole fleet in ~40&nbsp;s</b>. So: pfaedle all the way.</p>
+    </div>
     <div class=psec><h2>Candidate repairs — click to focus</h2>${cards}</div>
     <div class=psec><h2>How “${NAME[focus].split('·')[0].trim()}” works</h2>
       <pre class=pc>${PC[focus]||'<span class=cm># the raw government waypoints, unmodified</span>'}</pre></div>
@@ -258,8 +281,8 @@ function panel(){
       not bundled in this page; they load from a separate file, entirely in your browser.</div>`;
   for(const el of document.querySelectorAll('.cand')){
     el.onclick=e=>{const k=el.dataset.k;
-      if(e.target.classList.contains('eye')){vis[k]^=1;paint();panel();return;}
-      focus=k;draw();};
+      if(e.target.classList.contains('eye')){vis[k]^=1;paint();panel();syncLegend();return;}
+      focus=k;autoLayers(k);draw();};
     const eye=el.querySelector('.eye'); eye.onclick=e=>{e.stopPropagation();
       const k=el.dataset.k;vis[k]^=1;paint();panel();};
   }
