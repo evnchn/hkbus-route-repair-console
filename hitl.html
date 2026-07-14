@@ -1,0 +1,126 @@
+<!doctype html><html lang=en><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>HITL · A-or-B span review · hkbus fusion</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d1013;--surf:#151a20;--surf2:#1b222b;--line:#252d38;--line2:#323c49;--tx:#e7eaef;
+--mut:#8b95a3;--dim:#5c6675;--a:#ff9f0a;--b:#32d74b;--stop:#ffd60a;--kmb:#d81e28}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 Inter,system-ui,sans-serif}
+header{display:flex;align-items:center;gap:16px;padding:12px 20px;border-bottom:1px solid var(--line);
+ position:sticky;top:0;background:rgba(13,16,19,.95);backdrop-filter:blur(8px);z-index:1200}
+h1{font:600 18px Oswald;margin:0;text-transform:uppercase;letter-spacing:.5px}
+h1 span{color:var(--b)}
+#prog{color:var(--mut);font-size:13px}
+#exp{margin-left:auto;display:flex;gap:9px}
+button.tool{background:var(--surf2);color:var(--tx);border:1px solid var(--line2);border-radius:8px;
+ padding:7px 13px;font:500 12.5px Inter;cursor:pointer}
+button.tool:hover{border-color:#5c6675}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(430px,1fr));gap:14px;padding:16px 20px;max-width:1900px;margin:0 auto}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.card.voted-a{border-color:var(--a)} .card.voted-b{border-color:var(--b)} .card.voted-skip{opacity:.55}
+.chd{display:flex;align-items:center;gap:8px;padding:9px 12px}
+.rno{font:600 14px Oswald;background:var(--kmb);color:#fff;border-radius:4px;padding:2px 7px}
+.meta{font-size:11.5px;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.map{height:270px;background:#e9e7e2}
+.leaflet-tile{filter:grayscale(1) contrast(.92) brightness(1.04) opacity(.55)}
+.vote{display:flex;gap:8px;padding:10px 12px}
+.vbtn{flex:1;padding:9px 6px;border-radius:8px;font:600 12.5px Inter;cursor:pointer;border:1px solid var(--line2);background:var(--surf2);color:var(--tx)}
+.vbtn.a{border-color:#ff9f0a66} .vbtn.a:hover,.vbtn.a.on{background:#ff9f0a22;border-color:var(--a)}
+.vbtn.b{border-color:#32d74b66} .vbtn.b:hover,.vbtn.b.on{background:#32d74b22;border-color:var(--b)}
+.vbtn.s:hover,.vbtn.s.on{background:var(--surf2);border-color:var(--dim)}
+.why{font:11px "IBM Plex Mono";color:var(--dim);padding:0 12px 10px}
+.filterbar{display:flex;gap:10px;align-items:center;padding:10px 20px;border-bottom:1px solid var(--line);color:var(--mut);font-size:12.5px;flex-wrap:wrap}
+select{background:var(--surf2);color:var(--tx);border:1px solid var(--line2);border-radius:7px;padding:5px 8px}
+.note{color:var(--dim);font-size:12px;padding:14px 20px;max-width:900px}
+a{color:#5eb1ff}
+</style></head><body>
+<header><h1>A-or-B <span>span review</span></h1><div id=prog></div>
+<div id=exp>
+<button class=tool id=loadf>Load spans file…</button>
+<button class=tool id=expbtn>Export decisions JSON</button>
+<button class=tool id=clr>Clear votes</button>
+</div></header>
+<div class=filterbar>
+ <span><i style="display:inline-block;width:16px;height:4px;border-radius:2px;background:var(--a)"></i> A = CSDI segment</span>
+ <span><i style="display:inline-block;width:16px;height:4px;border-radius:2px;background:var(--b)"></i> B = fixed-pfaedle segment</span>
+ <span><i style="display:inline-block;width:9px;height:9px;border-radius:5px;background:var(--stop)"></i> stops</span>
+ <label>show <select id=fsel><option value=all>all</option><option value=unvoted>unvoted</option><option value=voted>voted</option></select></label>
+ <label>top <select id=nsel><option>60</option><option>200</option><option>500</option><option value=99999>all</option></select> by disagreement</label>
+ <span id=cnt></span>
+</div>
+<div id=grid></div>
+<div class=note>Ambiguous inter-stop spans where CSDI and fixed-pfaedle genuinely disagree (similar length,
+both pass automatic QC) — the fusion currently auto-picks by the terminus rule; your vote overrides it.
+Votes persist in this browser (localStorage) — <b>Export</b> and send the JSON back to apply. File format:
+<span style="font-family:'IBM Plex Mono'">{"file-span": "a"|"b"|"skip"}</span>.</div>
+<input type=file id=fileinp hidden accept=".json">
+<script>
+let SP=[],votes=JSON.parse(localStorage.getItem('hitl_votes')||'{}'),maps={};
+const key=s=>s.file+'#'+s.span;
+fetch('hitl_spans.json').then(r=>r.ok?r.json():[]).then(d=>{
+ SP=d.sort((x,y)=>y.dev_m-x.dev_m);render();}).catch(()=>{SP=[];render();});
+document.getElementById('loadf').onclick=()=>document.getElementById('fileinp').click();
+document.getElementById('fileinp').onchange=e=>{
+ const f=e.target.files[0];if(!f)return;const rd=new FileReader();
+ rd.onload=()=>{try{SP=JSON.parse(rd.result);render();}catch(err){alert('bad file: '+err.message);}};
+ rd.readAsText(f);};
+document.getElementById('expbtn').onclick=()=>{
+ const out={meta:{exported:new Date().toISOString(),total:SP.length,voted:Object.keys(votes).length},votes};
+ const b=new Blob([JSON.stringify(out,null,1)],{type:'application/json'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='hitl_decisions.json';a.click();};
+document.getElementById('clr').onclick=()=>{if(confirm('clear all votes?')){votes={};save();render();}};
+document.getElementById('fsel').onchange=()=>render();
+document.getElementById('nsel').onchange=()=>render();
+function save(){localStorage.setItem('hitl_votes',JSON.stringify(votes));}
+function prog(){
+ const v=Object.keys(votes).filter(k=>SP.some(s=>key(s)===k)).length;
+ document.getElementById('prog').textContent=`${v} / ${SP.length} decided`;
+}
+function render(){
+ prog();
+ const mode=document.getElementById('fsel').value;
+ const topn=+document.getElementById('nsel').value;
+ const grid=document.getElementById('grid');grid.innerHTML='';maps={};
+ let shown=0;
+ SP.forEach((s,idx)=>{
+  if(shown>=topn)return;
+  const k=key(s),v=votes[k];
+  if(mode==='unvoted'&&v)return; if(mode==='voted'&&!v)return;
+  shown++;
+  const c=document.createElement('div');
+  c.className='card'+(v?' voted-'+v:'');c.dataset.k=k;
+  c.innerHTML=`<div class=chd><span class=rno>${esc(s.route)}</span>
+    <span class=meta title="${esc(s.from)} → ${esc(s.to)}">${esc(s.from)} → ${esc(s.to)}</span>
+    <span class=meta style="margin-left:auto">${s.dev_m} m apart</span></div>
+   <div class=map id=m${idx}></div>
+   <div class=vote>
+    <button class="vbtn a ${v==='a'?'on':''}" data-v=a>A · CSDI (${(s.len_cs/1000).toFixed(1)} km)</button>
+    <button class="vbtn b ${v==='b'?'on':''}" data-v=b>B · pfaedle (${(s.len_pf/1000).toFixed(1)} km)</button>
+    <button class="vbtn s ${v==='skip'?'on':''}" data-v=skip>unsure</button></div>
+   <div class=why>auto-pick: ${s.auto==='cs'?'A (terminus rule)':'B'}${s.qa?' · A:'+esc(s.qa):''}${s.qb?' · B:'+esc(s.qb):''} · ${esc(s.file)} span ${s.span}</div>`;
+  grid.appendChild(c);
+  for(const b of c.querySelectorAll('.vbtn'))b.onclick=()=>{votes[k]=b.dataset.v;save();render();};
+  setTimeout(()=>{initMap(idx,s);},0);
+ });
+ document.getElementById('cnt').textContent=`${shown} shown`;
+}
+function esc(x){return String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function initMap(idx,s){
+ const el=document.getElementById('m'+idx);if(!el||maps[idx])return;
+ const m=L.map(el,{zoomControl:false,attributionControl:false,preferCanvas:true,scrollWheelZoom:false});
+ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(m);
+ const ll=c=>c.map(p=>[p[1],p[0]]);
+ const la=L.polyline(ll(s.a),{color:'#ff9f0a',weight:5,opacity:.9}).addTo(m);
+ L.polyline(ll(s.b),{color:'#32d74b',weight:5,opacity:.85,dashArray:'8 6'}).addTo(m);
+ [s.a[0],s.a[s.a.length-1]].forEach(p=>L.circleMarker([p[1],p[0]],
+   {radius:5,color:'#8a6d00',weight:1.5,fillColor:'#ffd60a',fillOpacity:1}).addTo(m));
+ const g=L.featureGroup([la,L.polyline(ll(s.b))]);
+ m.fitBounds(g.getBounds().pad(.25));
+ maps[idx]=m;
+}
+</script></body></html>
