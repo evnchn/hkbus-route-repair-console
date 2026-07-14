@@ -32,13 +32,14 @@ select,input[type=search]{background:var(--surf2);color:var(--tx);border:1px sol
 border-radius:9px;padding:8px 12px;font-size:12px;max-width:70%}
 #mtag b{font:600 16px Oswald}
 .note{color:var(--dim);font-size:11.5px;padding:8px 12px}
-#known{background:rgba(255,159,10,.08);border-bottom:1px solid var(--line);padding:7px 18px;
- font-size:12px;color:#ffc061;line-height:1.45}
+#known{position:absolute;top:10px;right:10px;z-index:950;max-width:360px;background:rgba(20,15,5,.92);
+ border:1px solid #ff9f0a55;border-radius:10px;padding:9px 12px;font-size:11.5px;color:#ffc061;line-height:1.45}
+#known .x{float:right;cursor:pointer;color:#ffc061;font-weight:600;margin-left:8px}
 @media (max-width:900px){
- #app{grid-template-columns:1fr;grid-template-rows:auto auto 45vh minmax(0,1fr)}
+ #app{grid-template-columns:1fr;grid-template-rows:auto 45vh minmax(0,1fr)}
  #list{max-height:none;border-right:none;border-bottom:1px solid var(--line);order:3}
  #mapwrap{order:2;min-height:45vh}
- #known{order:1}
+ #known{max-width:none;left:10px;right:10px;top:auto;bottom:54px}
  .tag{display:none}.pct{min-width:70px}
 }
 </style></head><body>
@@ -55,9 +56,9 @@ border-radius:9px;padding:8px 12px;font-size:12px;max-width:70%}
  <input type=search id=q placeholder="route…" size=8>
  <span class=lg id=stat></span>
 </header>
-<div id=known>⚠ 已知問題 known issues: ~65 route-dirs where fusion picked the worse source vs the operators' line (incl. 214/88/N214 near 彩雲邨) — under fix, list in the audit; 屯赤/機場 A-routes lag the recent rerouting in ALL sources; oracle (cyan) covers KMB/LWB only (~56%). Found something off? 逐段投票 → <a href="hitl.html">A-or-B review</a></div>
 <div id=list></div>
 <div id=mapwrap><div id=map></div><div id=mtag>click a route — geometry loads on demand</div>
+<div id=known><span class=x onclick="this.parentNode.remove()">✕</span>⚠ 已知問題 known issues: ~65 route-dirs where fusion picked the worse source vs the operators' line (incl. 214/88/N214 near 彩雲邨) — under fix, list in the audit; 屯赤/機場 A-routes lag the recent rerouting in ALL sources; oracle (cyan) covers KMB/LWB only (~56%). Found something off? 逐段投票 → <a href="hitl.html">A-or-B review</a></div>
 <div id=ltog style="position:absolute;bottom:12px;left:10px;z-index:900;background:rgba(13,16,19,.9);border:1px solid var(--line2);border-radius:9px;padding:7px 10px;display:flex;gap:11px;font-size:12px">
  <span class=tg data-k=fused style="cursor:pointer"><i style="display:inline-block;width:14px;height:4px;border-radius:2px;background:#32d74b"></i> fused</span>
  <span class=tg data-k=csdi style="cursor:pointer"><i style="display:inline-block;width:14px;height:4px;border-radius:2px;background:#ff453a"></i> CSDI</span>
