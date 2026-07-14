@@ -1,0 +1,117 @@
+<!doctype html><html lang=en><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>Fusion mix · ALL routes · hkbus</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧬</text></svg>">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d1013;--surf:#151a20;--surf2:#1b222b;--line:#252d38;--line2:#323c49;--tx:#e7eaef;
+--mut:#8b95a3;--dim:#5c6675;--cs:#ff453a;--pf:#32d74b;--agree:#1e7a3c;--orc:#00c8ff;--stop:#ffd60a}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:14px/1.5 Inter,system-ui,sans-serif}
+#app{display:grid;grid-template-columns:minmax(430px,42%) 1fr;grid-template-rows:auto 1fr;height:100vh}
+header{grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:11px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+h1{font:600 18px Oswald;margin:0;text-transform:uppercase}h1 span{color:var(--pf)}
+.lg{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mut)}
+.lg i{width:14px;height:5px;border-radius:2px;display:inline-block}
+select,input[type=search]{background:var(--surf2);color:var(--tx);border:1px solid var(--line2);border-radius:7px;padding:5px 8px;font:13px Inter}
+#list{overflow-y:auto;border-right:1px solid var(--line)}
+.row{display:flex;align-items:center;gap:8px;padding:4px 12px;cursor:pointer;border-bottom:1px solid #171d24}
+.row:hover,.row.sel{background:var(--surf2)}
+.rno{font:600 12px Oswald;min-width:46px;text-align:center;border-radius:4px;padding:1px 5px;color:#fff;background:#444d59}
+.rno.kmb{background:#d81e28}.rno.ctb{background:#f2b70a;color:#1a1300}.rno.gmb{background:#1a7f37}.rno.lwb{background:#e05c00}.rno.kmbctb{background:#d81e28}
+.tag{font:11px "IBM Plex Mono";color:var(--dim);min-width:86px}
+.bar{flex:1;height:10px;border-radius:5px;overflow:hidden;display:flex;background:var(--surf2)}
+.bar i{display:block;height:100%}
+.pct{font:11px "IBM Plex Mono";color:var(--mut);min-width:88px;text-align:right}
+#mapwrap{position:relative}#map{position:absolute;inset:0;background:#e9e7e2}
+.leaflet-tile{filter:grayscale(1) contrast(.92) brightness(1.04) opacity(.55)}
+#mtag{position:absolute;top:10px;left:10px;z-index:900;background:rgba(13,16,19,.9);border:1px solid var(--line2);
+border-radius:9px;padding:8px 12px;font-size:12px;max-width:70%}
+#mtag b{font:600 16px Oswald}
+.note{color:var(--dim);font-size:11.5px;padding:8px 12px}
+</style></head><body>
+<div id=app>
+<header><h1>Fusion <span>mix</span> · all routes</h1>
+ <span class=lg><i style="background:var(--agree)"></i>agree (pfaedle-drawn)</span>
+ <span class=lg><i style="background:var(--pf)"></i>pfaedle-decided</span>
+ <span class=lg><i style="background:var(--cs)"></i>CSDI-decided</span>
+ <label class=lg>sort <select id=sort>
+   <option value=cs>CSDI share ↓</option><option value=pf>pfaedle share ↓</option>
+   <option value=agree>agreement ↓</option><option value=len>length ↓</option></select></label>
+ <label class=lg>agency <select id=ag><option value="">all</option></select></label>
+ <label class=lg>kind <select id=kd><option value="">all</option><option>fused</option><option>fallback</option><option>pf_only</option><option>gmb</option></select></label>
+ <input type=search id=q placeholder="route…" size=8>
+ <span class=lg id=stat></span>
+</header>
+<div id=list></div>
+<div id=mapwrap><div id=map></div><div id=mtag>click a route — geometry loads on demand (fused · CSDI · pfaedle · official)</div></div>
+</div>
+<script>
+const HOST='https://hkbus-oracle.evnchn.io';
+let M={},ORC=null,rows=[],map,layers={},sel=null;
+const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+fetch('mix_data.json').then(r=>r.json()).then(d=>{M=d;build();render();});
+function build(){
+  rows=Object.entries(M).map(([f,v])=>{
+    const tot=v.agree_m+v.cs_m+v.pf_m||1;
+    return {f,...v,tot,csp:v.cs_m/tot,pfp:v.pf_m/tot,agp:v.agree_m/tot};
+  });
+  const ags=[...new Set(rows.map(r=>r.agency))].sort();
+  for(const a of ags){const o=document.createElement('option');o.textContent=a;document.getElementById('ag').appendChild(o);}
+  map=L.map('map',{preferCanvas:true,zoomControl:false}).setView([22.35,114.12],11);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+  fetch(HOST+'/hkbus-oracle-bench.geojson').then(r=>r.ok?r.json():null).then(g=>{
+    if(!g)return;ORC={};for(const ft of g.features||[]){const t=(ft.properties||{}).tag;
+      if(t&&ft.geometry.type==='LineString')ORC[t]=ft.geometry.coordinates;}}).catch(()=>{});
+  for(const el of ['sort','ag','kd'])document.getElementById(el).onchange=render;
+  document.getElementById('q').oninput=render;
+}
+function render(){
+  const s=document.getElementById('sort').value,ag=document.getElementById('ag').value,
+        kd=document.getElementById('kd').value,q=document.getElementById('q').value.trim().toUpperCase();
+  let rs=rows.filter(r=>(!ag||r.agency===ag)&&(!kd||r.kind===kd)&&(!q||r.route.toUpperCase().startsWith(q)));
+  rs.sort((a,b)=>s==='cs'?b.csp-a.csp:s==='pf'?b.pfp-a.pfp:s==='agree'?b.agp-a.agp:b.tot-a.tot);
+  document.getElementById('stat').textContent=`${rs.length} of ${rows.length}`;
+  const L_=document.getElementById('list');L_.innerHTML='';
+  const frag=document.createDocumentFragment();
+  rs.forEach(r=>{
+    const d=document.createElement('div');d.className='row'+(sel===r.f?' sel':'');
+    const cls=r.agency.toLowerCase().replace('+','');
+    d.innerHTML=`<span class="rno ${esc(cls)}">${esc(r.route)}</span><span class=tag>${esc(r.f.replace('.json',''))}</span>
+      <span class=bar><i style="width:${r.agp*100}%;background:var(--agree)"></i><i style="width:${r.pfp*100}%;background:var(--pf)"></i><i style="width:${r.csp*100}%;background:var(--cs)"></i></span>
+      <span class=pct>${(r.csp*100).toFixed(0)}% cs · ${(r.tot/1000).toFixed(1)}km</span>`;
+    d.onclick=()=>show(r);
+    frag.appendChild(d);
+  });
+  L_.appendChild(frag);
+}
+async function show(r){
+  sel=r.f;render();
+  for(const k in layers)map.removeLayer(layers[k]);layers={};
+  const tag=r.f.replace('.json','');
+  document.getElementById('mtag').innerHTML=`<b>${esc(r.route)}</b> · ${esc(tag)} · ${esc(r.agency)} · ${esc(r.kind)}<br>
+    <span style="color:var(--mut)">agree ${(r.agp*100).toFixed(0)}% · pfaedle ${(r.pfp*100).toFixed(0)}% · CSDI ${(r.csp*100).toFixed(0)}%</span>`;
+  const srcs=[['csdi','#ff453a','csdi'],['pf','#ff9f0a','pf'],['fused','#32d74b','fused']];
+  const ll=c=>c.map(p=>[p[1],p[0]]);
+  for(const [k,color,dir] of srcs){
+    try{
+      const g=await fetch(`${HOST}/data/${dir}/${r.f}`).then(x=>x.ok?x.json():null);
+      if(!g)continue;
+      const geo=g.features[0].geometry;
+      const parts=geo.type==='LineString'?[geo.coordinates]:geo.coordinates;
+      layers[k]=L.polyline(parts.map(ll),{color,weight:k==='fused'?5:3,opacity:k==='fused'?.95:.55,
+        dashArray:k==='pf'?'7 6':null}).addTo(map);
+    }catch(e){}
+  }
+  if(ORC&&ORC[tag]){
+    layers.orc=L.featureGroup([
+      L.polyline(ll(ORC[tag]),{color:'#04121a',weight:7,opacity:.4}),
+      L.polyline(ll(ORC[tag]),{color:'#00c8ff',weight:3,opacity:.85})]).addTo(map);
+  }
+  const g=L.featureGroup(Object.values(layers).filter(l=>l.getBounds&&l.getBounds().isValid()));
+  if(g.getLayers().length)map.fitBounds(g.getBounds().pad(.08));
+}
+</script></body></html>
