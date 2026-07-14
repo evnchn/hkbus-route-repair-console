@@ -47,11 +47,18 @@ border-radius:9px;padding:8px 12px;font-size:12px;max-width:70%}
  <span class=lg id=stat></span>
 </header>
 <div id=list></div>
-<div id=mapwrap><div id=map></div><div id=mtag>click a route — geometry loads on demand (fused · CSDI · pfaedle · official)</div></div>
+<div id=mapwrap><div id=map></div><div id=mtag>click a route — geometry loads on demand</div>
+<div id=ltog style="position:absolute;bottom:12px;left:10px;z-index:900;background:rgba(13,16,19,.9);border:1px solid var(--line2);border-radius:9px;padding:7px 10px;display:flex;gap:11px;font-size:12px">
+ <span class=tg data-k=fused style="cursor:pointer"><i style="display:inline-block;width:14px;height:4px;border-radius:2px;background:#32d74b"></i> fused</span>
+ <span class=tg data-k=csdi style="cursor:pointer"><i style="display:inline-block;width:14px;height:4px;border-radius:2px;background:#ff453a"></i> CSDI</span>
+ <span class=tg data-k=pf style="cursor:pointer"><i style="display:inline-block;width:14px;height:4px;border-radius:2px;background:#ff9f0a"></i> pfaedle</span>
+ <span class=tg data-k=orc style="cursor:pointer"><i style="display:inline-block;width:14px;height:4px;border-radius:2px;background:#00c8ff"></i> official</span>
+</div></div>
 </div>
 <script>
 const HOST='https://hkbus-oracle.evnchn.io';
-let M={},ORC=null,rows=[],map,layers={},sel=null;
+let M={},ORC=null,rows=[],map,layers={},sel=null,cache=null;
+const vis={fused:1,csdi:0,pf:0,orc:1};
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 fetch('mix_data.json').then(r=>r.json()).then(d=>{M=d;build();render();});
 function build(){
@@ -68,6 +75,10 @@ function build(){
       if(t&&ft.geometry.type==='LineString')ORC[t]=ft.geometry.coordinates;}}).catch(()=>{});
   for(const el of ['sort','ag','kd'])document.getElementById(el).onchange=render;
   document.getElementById('q').oninput=render;
+  for(const el of document.querySelectorAll('.tg')){
+    el.style.opacity=vis[el.dataset.k]?1:.35;
+    el.onclick=()=>{vis[el.dataset.k]^=1;el.style.opacity=vis[el.dataset.k]?1:.35;if(cache)draw();};
+  }
 }
 function render(){
   const s=document.getElementById('sort').value,ag=document.getElementById('ag').value,
@@ -90,28 +101,38 @@ function render(){
 }
 async function show(r){
   sel=r.f;render();
-  for(const k in layers)map.removeLayer(layers[k]);layers={};
   const tag=r.f.replace('.json','');
   document.getElementById('mtag').innerHTML=`<b>${esc(r.route)}</b> · ${esc(tag)} · ${esc(r.agency)} · ${esc(r.kind)}<br>
     <span style="color:var(--mut)">agree ${(r.agp*100).toFixed(0)}% · pfaedle ${(r.pfp*100).toFixed(0)}% · CSDI ${(r.csp*100).toFixed(0)}%</span>`;
-  const srcs=[['csdi','#ff453a','csdi'],['pf','#ff9f0a','pf'],['fused','#32d74b','fused']];
-  const ll=c=>c.map(p=>[p[1],p[0]]);
-  for(const [k,color,dir] of srcs){
+  cache={tag,geo:{}};
+  await Promise.all([['csdi','csdi'],['pf','pf'],['fused','fused']].map(async([k,dir])=>{
     try{
       const g=await fetch(`${HOST}/data/${dir}/${r.f}`).then(x=>x.ok?x.json():null);
-      if(!g)continue;
+      if(!g)return;
       const geo=g.features[0].geometry;
-      const parts=geo.type==='LineString'?[geo.coordinates]:geo.coordinates;
-      layers[k]=L.polyline(parts.map(ll),{color,weight:k==='fused'?5:3,opacity:k==='fused'?.95:.55,
-        dashArray:k==='pf'?'7 6':null}).addTo(map);
+      cache.geo[k]=geo.type==='LineString'?[geo.coordinates]:geo.coordinates;
     }catch(e){}
+  }));
+  if(ORC&&ORC[tag])cache.geo.orc=[ORC[tag]];
+  draw(true);
+}
+function draw(fit){
+  for(const k in layers)map.removeLayer(layers[k]);layers={};
+  if(!cache)return;
+  const ll=c=>c.map(p=>[p[1],p[0]]);
+  const STYLE={fused:{color:'#32d74b',weight:5,opacity:.95},
+               csdi:{color:'#ff453a',weight:3,opacity:.75},
+               pf:{color:'#ff9f0a',weight:3,opacity:.75,dashArray:'7 6'}};
+  for(const k of ['csdi','pf','fused']){
+    if(!vis[k]||!cache.geo[k])continue;
+    layers[k]=L.polyline(cache.geo[k].map(ll),STYLE[k]).addTo(map);
   }
-  if(ORC&&ORC[tag]){
+  if(vis.orc&&cache.geo.orc){
     layers.orc=L.featureGroup([
-      L.polyline(ll(ORC[tag]),{color:'#04121a',weight:7,opacity:.4}),
-      L.polyline(ll(ORC[tag]),{color:'#00c8ff',weight:3,opacity:.85})]).addTo(map);
+      L.polyline(ll(cache.geo.orc[0]),{color:'#04121a',weight:7,opacity:.4}),
+      L.polyline(ll(cache.geo.orc[0]),{color:'#00c8ff',weight:3,opacity:.85})]).addTo(map);
   }
-  const g=L.featureGroup(Object.values(layers).filter(l=>l.getBounds&&l.getBounds().isValid()));
-  if(g.getLayers().length)map.fitBounds(g.getBounds().pad(.08));
+  if(fit){const g=L.featureGroup(Object.values(layers).filter(l=>l.getBounds&&l.getBounds().isValid()));
+    if(g.getLayers().length)map.fitBounds(g.getBounds().pad(.08));}
 }
 </script></body></html>
