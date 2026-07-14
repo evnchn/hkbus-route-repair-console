@@ -253,7 +253,7 @@ function panel(){
       ${nl?`<input id=orcop type=range min=0 max=100 value=${Math.round(orcOp*100)} style="width:100%;accent-color:#00c8ff;margin:0 0 10px">`:''}
       <label class=upl>Load oracle file (.geojson)<input id=orcfile type=file accept=".geojson,.json" hidden></label></div>
     <div class=psec><h2>Pre-emptive candidates (not yet run)</h2><ul class=next>
-      <li><b>S2 + CI gates + CSDI fallback</b> — ship S2 behind a stop-snap gate (any stop &gt;100 m fails the file → keep CSDI for that route). Production posture; the gate alone would have caught PR-16 pre-merge.</li>
+      <li><b>S2 + CI gates + CSDI fallback, franchised buses only</b> — ship S2 behind a stop-snap gate (any stop &gt;100 m fails the file → keep CSDI for that route). Production posture; the gate alone would have caught PR-16 pre-merge. <b>GMB stays CSDI by decision</b>: the government's GMB stop positions are themselves incomplete/misplaced, minibuses don't hold to a fixed line in practice, and no ground-truth source exists to verify against — so the GMB rows here are measurement, not a shipping target.</li>
       <li><b>Alternative matchers (OSRM / Valhalla bus profile)</b> — same GTFS→OSM idea, different HMM; only worth running if S2's residuals (5 files) matter.</li>
       <li><b>Upstream pfaedle patch</b> — teach it <span class=mono>*:conditional</span> access tags properly, instead of a downstream cfg fork.</li>
       <li><b>Fix the T1 stop coordinate</b> — 74 airport route-dirs have the T1 stop ~160 m from <i>both</i> sources; the stop itself looks wrong. Data fix, orthogonal to any strategy.</li>
