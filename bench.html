@@ -1,0 +1,266 @@
+<!doctype html><html lang=en><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>Strategy bench · route-waypoints · hkbus</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚖️</text></svg>">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d1013; --surf:#151a20; --surf2:#1b222b; --line:#252d38; --line2:#323c49;
+  --tx:#e7eaef; --mut:#8b95a3; --dim:#5c6675;
+  --csdi:#ff453a; --pf16:#ff9f0a; --s1:#c07cf0; --s2:#32d74b; --stop:#ffd60a; --orc:#00c8ff;
+  --kmb:#d81e28; --ctb:#f2b70a; --gmb:#1a7f37; --lwb:#e05c00;
+  --good:#32d74b; --warn:#ff9f0a; --bad:#ff453a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);
+  font:14px/1.5 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+b,strong{font-weight:600}
+#app{display:grid;grid-template-columns:212px 1fr 380px;grid-template-rows:auto 1fr;height:100vh}
+header{grid-column:1/-1;display:flex;align-items:center;gap:18px;padding:11px 18px;
+  background:linear-gradient(180deg,#11161c,#0d1013);border-bottom:1px solid var(--line)}
+header h1{font-family:Oswald;font-weight:600;font-size:19px;letter-spacing:.3px;margin:0;text-transform:uppercase}
+header h1 span{color:var(--s2)}
+header .thesis{color:var(--mut);font-size:12.5px;max-width:520px;line-height:1.35}
+header .legend{margin-left:auto;display:flex;gap:13px;flex-wrap:wrap}
+.lgi{display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;user-select:none}
+.lgi i{width:16px;height:4px;border-radius:2px;display:inline-block}
+.lgi.off{opacity:.32}
+#rail{background:var(--surf);border-right:1px solid var(--line);overflow-y:auto;padding:6px 0}
+.grp{padding:11px 12px 4px;font:600 10px/1 Oswald;letter-spacing:1px;text-transform:uppercase;color:var(--dim)}
+.blade{display:flex;align-items:center;gap:8px;margin:2px 7px;padding:6px 8px;border-radius:7px;
+  cursor:pointer;border:1px solid transparent}
+.blade:hover{background:var(--surf2)}
+.blade.sel{background:var(--surf2);border-color:var(--line2)}
+.blade .no{font-family:Oswald;font-weight:600;font-size:14px;letter-spacing:.4px;
+  padding:2px 6px;border-radius:4px;color:#fff;min-width:44px;text-align:center;line-height:1.3}
+.no.kmb{background:var(--kmb)} .no.ctb{background:var(--ctb);color:#1a1300}
+.no.gmb{background:var(--gmb)} .no.lwb{background:var(--lwb)} .no.dft{background:#444d59}
+.blade .meta{font-size:10.5px;color:var(--mut);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.blade .flag{margin-left:auto;font-size:10px}
+#mapwrap{position:relative}
+#map{position:absolute;inset:0;background:#e9e7e2}
+.leaflet-tile{filter:grayscale(1) contrast(.92) brightness(1.04) opacity(.5)}
+#rtag{position:absolute;top:12px;left:12px;z-index:500;background:rgba(13,16,19,.86);
+  backdrop-filter:blur(7px);border:1px solid var(--line2);border-radius:10px;padding:9px 13px;max-width:62%}
+#rtag .rn{font-family:Oswald;font-weight:600;font-size:24px;letter-spacing:.5px;line-height:1}
+#rtag .od{color:var(--mut);font-size:11.5px;margin-top:3px}
+.ctag{display:inline-block;font:600 10px/1 Oswald;letter-spacing:.8px;text-transform:uppercase;
+  padding:3px 7px;border-radius:5px;margin-top:7px;border:1px solid}
+#panel{background:var(--surf);border-left:1px solid var(--line);overflow-y:auto}
+.psec{padding:13px 15px;border-bottom:1px solid var(--line)}
+.psec h2{font:600 11px/1 Oswald;letter-spacing:1px;text-transform:uppercase;color:var(--dim);margin:0 0 10px}
+.gist{padding:13px 15px;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(50,215,75,.09),rgba(50,215,75,.02))}
+.gist .gh{font:600 11px/1 Oswald;letter-spacing:1.5px;text-transform:uppercase;color:var(--s2);margin-bottom:7px}
+.gist p{margin:0;font-size:12.5px;line-height:1.55}
+table.sc{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:9px}
+table.sc th,table.sc td{padding:4px 6px;text-align:right;border-bottom:1px solid var(--line)}
+table.sc th{font:600 10px/1.3 Oswald;letter-spacing:.6px;text-transform:uppercase;color:var(--dim)}
+table.sc td:first-child,table.sc th:first-child{text-align:left}
+table.sc .win{color:var(--s2);font-weight:600}
+.cand{border:1px solid var(--line);border-radius:9px;padding:10px 11px;margin-bottom:9px;cursor:pointer;
+  background:var(--surf);transition:border-color .12s}
+.cand:hover{border-color:var(--line2)} .cand.focus{border-color:var(--line2);background:var(--surf2)}
+.cand .top{display:flex;align-items:center;gap:8px}
+.cand .dot{width:11px;height:11px;border-radius:3px;flex:none}
+.cand .nm{font-weight:600;font-size:12.5px}
+.cand .eye{margin-left:auto;font-size:11px;color:var(--dim);cursor:pointer}
+.cand .mrow{display:flex;gap:10px;font-size:11px;color:var(--mut);margin-top:6px;flex-wrap:wrap}
+.cand .mrow b{color:var(--tx);font-family:"IBM Plex Mono"}
+.verdict{font-size:11.5px;padding:5px 8px;border-radius:6px;margin-top:7px;line-height:1.4}
+.v-good{background:rgba(50,215,75,.1);color:#7ee89a} .v-warn{background:rgba(255,159,10,.1);color:#ffc061}
+.v-bad{background:rgba(255,69,58,.1);color:#ff8a82} .v-none{background:var(--surf2);color:var(--mut)}
+.pickchip{font-size:11px;padding:6px 9px;border-radius:7px;background:var(--surf2);border:1px solid var(--line);
+  color:var(--mut);margin-bottom:9px;line-height:1.45}
+.pickchip b{color:var(--tx)}
+.next{font-size:12px;color:var(--mut);line-height:1.55;margin:0;padding-left:16px}
+.next li{margin-bottom:7px} .next b{color:var(--tx)}
+.orc-note{font-size:12px;color:var(--mut);line-height:1.45;margin-bottom:9px}
+.upl{display:block;text-align:center;font-size:12px;font-weight:500;color:var(--orc);cursor:pointer;
+  padding:8px 10px;border:1px dashed #00c8ff55;border-radius:8px;background:rgba(0,200,255,.06)}
+.upl:hover{background:rgba(0,200,255,.13)}
+a{color:#5eb1ff}
+.foot{padding:11px 15px;color:var(--dim);font-size:11px;line-height:1.5}
+@media (max-width:900px){#app{grid-template-columns:1fr;grid-template-rows:auto 40vh auto auto}
+  #rail{display:flex;overflow-x:auto} .grp{display:none} #panel{border-left:none;border-top:1px solid var(--line)}}
+</style></head><body>
+<div id=app>
+<header>
+  <h1>Strategy <span>bench</span></h1>
+  <div class=thesis>Four ways out of the CSDI-vs-pfaedle standoff, each run for real and scored against the
+  operators' own lines on 33 stratified route-directions. Pick a route; see what each strategy draws.</div>
+  <div class=legend>
+    <div class=lgi data-c=csdi><i style="background:var(--csdi)"></i>CSDI (live)</div>
+    <div class=lgi data-c=pf16><i style="background:var(--pf16)"></i>pfaedle PR-16</div>
+    <div class=lgi data-c=s1><i style="background:var(--s1)"></i>S1 deloop-CSDI</div>
+    <div class=lgi data-c=s2><i style="background:var(--s2)"></i>S2 fixed-pfaedle</div>
+    <div class=lgi data-c=oracle><i style="background:var(--orc)"></i>oracle</div>
+    <div class=lgi data-c=stops><i style="background:var(--stop)"></i>stops</div>
+  </div>
+</header>
+<nav id=rail></nav>
+<div id=mapwrap><div id=map></div><div id=rtag></div></div>
+<aside id=panel></aside>
+</div>
+<script>
+const C={csdi:'#ff453a',pf16:'#ff9f0a',s1:'#c07cf0',s2:'#32d74b'};
+const NAME={csdi:'CSDI — live source',pf16:'pfaedle — PR-16 (reverted)',
+            s1:'S1 · auto-deloop CSDI',s2:'S2 · fixed pfaedle (HK cfg)'};
+const SUB={csdi:'government line, routed not observed',
+           pf16:'default cfg: can’t enter termini / bus gates',
+           s1:'self-overlap heal; loops only, fails open',
+           s2:'bus=private@(franchised)+service kept · station-move penalty ×5'};
+let D=null,R=[],ORC={},cur=0,focus='s2',orcOp=.9;
+const vis={csdi:1,pf16:0,s1:0,s2:1,oracle:1,stops:1};
+let map,layers={};
+const km=m=>m==null?'—':(m/1000).toFixed(1)+' km';
+const ll=c=>c.map(p=>[p[1],p[0]]);
+
+fetch('bench_routes.json').then(r=>r.json()).then(d=>{D=d;R=d.routes;init();
+  fetch('hkbus-oracle-bench.geojson').then(r=>r.ok?r.json():null).then(g=>{if(g)loadOracle(g);}).catch(()=>{});
+});
+function loadOracle(gj){
+  ORC={};
+  for(const f of (gj.features||[])){const p=f.properties||{};
+    if(p.tag&&f.geometry&&f.geometry.type==='LineString')
+      ORC[p.tag]={coords:f.geometry.coordinates,op:p.op,variant:p.variant};}
+  if(map)draw();
+}
+function coName(co){return co==='kmb+ctb'?'kmb':co==='dft'?'dft':co;}
+function init(){
+  map=L.map('map',{preferCanvas:true,zoomControl:false});
+  map.createPane('oraclePane');map.getPane('oraclePane').style.zIndex=650;
+  L.control.zoom({position:'bottomright'}).addTo(map);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+  const rail=document.getElementById('rail');
+  const order=['terminus-miss','wrong-street','csdi-loop','ctb-manual','gmb-no-oracle','control'];
+  for(const k of order){
+    const rs=R.map((r,i)=>[r,i]).filter(([r])=>r.kind===k);
+    if(!rs.length)continue;
+    const h=document.createElement('div');h.className='grp';h.textContent=D.kinds[k]||k;rail.appendChild(h);
+    for(const [r,i] of rs){
+      const co=coName(r.co)||'dft';
+      const s2ok=r.metrics.s2&&r.metrics.s2.maxstop!=null&&r.metrics.s2.maxstop<=50;
+      const b=document.createElement('div');b.className='blade';b.dataset.i=i;
+      b.innerHTML=`<span class="no ${['kmb','ctb','gmb','lwb'].includes(co)?co:'dft'}">${r.route}</span>`+
+        `<span class=meta>${r.tag}</span><span class=flag>${s2ok?'✓':'✗'}</span>`;
+      b.onclick=()=>{cur=i;draw()};rail.appendChild(b);
+    }
+  }
+  for(const el of document.querySelectorAll('.lgi'))el.onclick=()=>{
+    vis[el.dataset.c]^=1;el.classList.toggle('off',!vis[el.dataset.c]);paint();panel();};
+  const first=document.querySelector('.blade');if(first)cur=+first.dataset.i;
+  draw();
+}
+function draw(){
+  document.querySelectorAll('.blade').forEach(b=>b.classList.toggle('sel',+b.dataset.i===cur));
+  paint(true);panel();
+  for(const el of document.querySelectorAll('.lgi'))el.classList.toggle('off',!vis[el.dataset.c]);
+}
+function paint(fit){
+  for(const k in layers)map.removeLayer(layers[k]);layers={};
+  const r=R[cur];
+  for(const k of ['csdi','pf16','s1','s2']){
+    if(!vis[k])continue;const c=r.curves[k];if(!c)continue;
+    const foc=k===focus;
+    layers[k]=L.polyline(c.map(ll),{color:C[k],weight:foc?5:3,opacity:foc?1:.6}).addTo(map);
+  }
+  const orc=ORC[r.tag];
+  if(vis.oracle&&orc){
+    const o=ll(orc.coords);
+    layers.oracle=L.layerGroup([
+      L.polyline(o,{color:'#04121a',weight:7,opacity:orcOp*.8,pane:'oraclePane',interactive:false}),
+      L.polyline(o,{color:'#00c8ff',weight:3.5,opacity:orcOp,pane:'oraclePane',interactive:false})]).addTo(map);
+  }
+  if(vis.stops)layers.stops=L.layerGroup(r.stops.map(p=>L.circleMarker([p[1],p[0]],
+    {radius:3.5,color:'#8a6d00',weight:1,fillColor:'#ffd60a',fillOpacity:.95}))).addTo(map);
+  if(fit){const g=L.featureGroup(Object.values(layers).filter(l=>l.getBounds&&l.getBounds().isValid()));
+    if(g.getLayers().length)map.fitBounds(g.getBounds().pad(.09));}
+}
+function vRoute(r,k){
+  const m=r.metrics[k];if(!m||m.maxstop==null)return['v-none','not produced'];
+  const dev=Math.max(m.dev_o2c??0,m.dev_c2o??0);
+  const gmb=r.kind==='gmb-no-oracle';
+  const bad=m.maxstop>100||(!gmb&&dev>300)||(gmb&&m.len_vs_stoppath>2);
+  const warn=m.maxstop>50||(!gmb&&dev>150)||(gmb&&m.len_vs_stoppath>1.6);
+  if(bad)return['v-bad',gmb?`blows up to ${m.len_vs_stoppath}× the stop path`:
+    m.maxstop>100?`strands a stop ${m.maxstop} m off the line`:`deviates ${dev} m from the official line`];
+  if(warn)return['v-warn',gmb?`${m.len_vs_stoppath}× stop path — inspect`:
+    `worst stop ${m.maxstop} m · worst deviation ${dev} m`];
+  return['v-good',gmb?`tight: ${m.len_vs_stoppath}× stop path, stops ≤${m.maxstop} m`:
+    `stops ≤${m.maxstop} m · within ${dev||'–'} m of official`];
+}
+function panel(){
+  const r=R[cur];
+  const KC={'terminus-miss':['var(--pf16)','Stranded terminus'],'csdi-loop':['var(--csdi)','CSDI loop'],
+    'wrong-street':['#ff6b9d','Wrong street'],'ctb-manual':['var(--ctb)','CTB manual oracle'],
+    control:['var(--s2)','Control'],'gmb-no-oracle':['var(--gmb)','GMB circular']};
+  const [cc,cl]=KC[r.kind];
+  document.getElementById('rtag').innerHTML=
+    `<div class=rn>${r.route} <span style="font-size:13px;color:var(--mut)">${r.dir==='O'?'outbound':'inbound'}</span></div>`+
+    `<div class=od>${r.tag} · ${r.co.toUpperCase()}</div>`+
+    `<div class=ctag style="color:${cc};border-color:${cc}">${cl}</div>`;
+  const S=D.summaries;
+  const fmt=(v,best)=>v==null?'—':`<span class="${best?'win':''}">${v}</span>`;
+  const tbl=`<table class=sc>
+    <tr><th>benchmark (33)</th><th>CSDI</th><th>PR-16</th><th>S1</th><th>S2</th><th>S3</th></tr>
+    <tr><td>med max stop-dist</td>${['csdi','pf16','s1','s2','s3'].map(k=>`<td>${fmt(S[k].med_maxstop,k==='s2')}</td>`).join('')}</tr>
+    <tr><td>files stop&gt;50 m</td>${['csdi','pf16','s1','s2','s3'].map(k=>`<td>${fmt(S[k].n_maxstop_gt50,k==='s2')}</td>`).join('')}</tr>
+    <tr><td>files &gt;150 m off oracle</td>${['csdi','pf16','s1','s2','s3'].map(k=>`<td>${fmt(S[k].n_dev_gt150,k==='s2')}</td>`).join('')}</tr>
+    <tr><td>GMB len ÷ stop-path</td>${['csdi','pf16','s1','s2','s3'].map(k=>`<td>${fmt(S[k].gmb_med_len_vs_sp,k==='s2')}</td>`).join('')}</tr></table>`;
+  let cards='';
+  for(const k of ['csdi','pf16','s1','s2']){
+    const m=r.metrics[k]||{};const [vc,vt]=vRoute(r,k);
+    cards+=`<div class="cand ${k===focus?'focus':''}" data-k=${k}>
+      <div class=top><span class=dot style="background:${C[k]}"></span>
+        <span class=nm>${NAME[k]}</span><span class=eye>${vis[k]?'●':'○'}</span></div>
+      <div style="font-size:11px;color:var(--mut);margin-top:3px">${SUB[k]}</div>
+      <div class=mrow>
+        <span>stop max <b>${m.maxstop??'—'} m</b></span>
+        <span>dev <b>${m.dev_o2c??'—'}/${m.dev_c2o??'—'} m</b></span>
+        <span>len <b>${km(m.len_m)}</b></span></div>
+      <div class="verdict ${vc}">${vt}</div></div>`;
+  }
+  const pick=r.pick?`<div class=pickchip>S3 hybrid arbiter picks <b>${r.pick==='csdi'?'CSDI':'pfaedle'}</b> here — <i>${r.pick_reason}</i></div>`:'';
+  const orc=ORC[r.tag];const nl=Object.keys(ORC).length;
+  document.getElementById('panel').innerHTML=`
+    <div class=gist><div class=gh>The adjudication</div>
+      <p><b style="color:var(--s2)">S2 — fixed pfaedle</b> wins every aggregate. Root cause was config,
+      not concept: HK tags franchised-bus gates <span class=mono>bus=private @ (franchised)</span> on
+      <span class=mono>highway=service</span> ways pfaedle's default profile drops — plus a
+      station-move penalty so low it "moves" termini instead of entering them. Two fixes, whole bench flips.
+      <b>S4</b> (CSDI as pfaedle input) is capability-dead: no guide-shape mode exists.</p>${tbl}</div>
+    <div class=psec><h2>Candidates on this route — click to focus</h2>${pick}${cards}</div>
+    <div class=psec><h2>Ground truth — official operator line</h2>
+      <div class=orc-note>${nl?`<b style="color:var(--orc)">${nl}</b> official lines loaded${orc?'':' — <span style="color:var(--warn)">none for this route (GMB has no oracle API)</span>'}.`:
+      'No oracle loaded. Official lines ship as a <b>separate private file</b> — load it below; it never leaves your browser.'}</div>
+      ${nl?`<input id=orcop type=range min=0 max=100 value=${Math.round(orcOp*100)} style="width:100%;accent-color:#00c8ff;margin:0 0 10px">`:''}
+      <label class=upl>Load oracle file (.geojson)<input id=orcfile type=file accept=".geojson,.json" hidden></label></div>
+    <div class=psec><h2>Pre-emptive candidates (not yet run)</h2><ul class=next>
+      <li><b>S2 + CI gates + CSDI fallback</b> — ship S2 behind a stop-snap gate (any stop &gt;100 m fails the file → keep CSDI for that route). Production posture; the gate alone would have caught PR-16 pre-merge.</li>
+      <li><b>Alternative matchers (OSRM / Valhalla bus profile)</b> — same GTFS→OSM idea, different HMM; only worth running if S2's residuals (5 files) matter.</li>
+      <li><b>Upstream pfaedle patch</b> — teach it <span class=mono>*:conditional</span> access tags properly, instead of a downstream cfg fork.</li>
+      <li><b>Fix the T1 stop coordinate</b> — 74 airport route-dirs have the T1 stop ~160 m from <i>both</i> sources; the stop itself looks wrong. Data fix, orthogonal to any strategy.</li>
+      <li><b>Operator-line import</b> — rejected: licensing/ToS + KMB-only coverage; stays an evaluation oracle.</li></ul></div>
+    <div class=foot>All five columns were produced by real runs and scored by one shared script against
+      operator geometry (KMB/CTB). Oracle lines are not bundled in this page. S3 hybrid draws no line of its
+      own — it picks per-route between CSDI and pfaedle (chip above).</div>`;
+  for(const el of document.querySelectorAll('.cand')){
+    el.onclick=e=>{const k=el.dataset.k;
+      if(e.target.classList.contains('eye')){vis[k]^=1;paint();panel();return;}
+      focus=k;vis[k]=1;draw();};
+  }
+  const op=document.getElementById('orcop');
+  if(op)op.oninput=e=>{orcOp=e.target.value/100;paint();};
+  document.getElementById('orcfile').onchange=e=>{
+    const f=e.target.files[0];if(!f)return;const rd=new FileReader();
+    rd.onload=()=>{try{loadOracle(JSON.parse(rd.result));panel();}catch(err){alert('bad file: '+err.message);}};
+    rd.readAsText(f);};
+}
+</script></body></html>
