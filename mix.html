@@ -34,7 +34,7 @@ border-radius:9px;padding:8px 12px;font-size:12px;max-width:70%}
 .note{color:var(--dim);font-size:11.5px;padding:8px 12px}
 </style></head><body>
 <div id=app>
-<header><h1>Fusion <span>mix</span> · all routes</h1>
+<header><h1>Fusion <span>mix</span> · all franchised routes</h1>
  <span class=lg><i style="background:var(--agree)"></i>agree (pfaedle-drawn)</span>
  <span class=lg><i style="background:var(--pf)"></i>pfaedle-decided</span>
  <span class=lg><i style="background:var(--cs)"></i>CSDI-decided</span>
@@ -42,7 +42,7 @@ border-radius:9px;padding:8px 12px;font-size:12px;max-width:70%}
    <option value=cs>CSDI share ↓</option><option value=pf>pfaedle share ↓</option>
    <option value=agree>agreement ↓</option><option value=len>length ↓</option></select></label>
  <label class=lg>agency <select id=ag><option value="">all</option></select></label>
- <label class=lg>kind <select id=kd><option value="">all</option><option>fused</option><option>fallback</option><option>pf_only</option><option>gmb</option></select></label>
+ <label class=lg>kind <select id=kd><option value="">all</option><option>fused</option><option>fallback</option><option>pf_only</option><option>csdi_only</option></select></label>
  <input type=search id=q placeholder="route…" size=8>
  <span class=lg id=stat></span>
 </header>
@@ -113,6 +113,7 @@ async function show(r){
       cache.geo[k]=geo.type==='LineString'?[geo.coordinates]:geo.coordinates;
     }catch(e){}
   }));
+  if(!cache.geo.fused&&cache.geo.csdi)cache.geo.fused=cache.geo.csdi; // shipping line = CSDI where no fusion output
   if(ORC&&ORC[tag])cache.geo.orc=[ORC[tag]];
   draw(true);
 }
