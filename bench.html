@@ -41,7 +41,7 @@ header .legend{margin-left:auto;display:flex;gap:13px;flex-wrap:wrap}
   padding:2px 6px;border-radius:4px;color:#fff;min-width:44px;text-align:center;line-height:1.3}
 .no.kmb{background:var(--kmb)} .no.ctb{background:var(--ctb);color:#1a1300}
 .no.gmb{background:var(--gmb)} .no.lwb{background:var(--lwb)} .no.dft{background:#444d59}
-.blade .meta{font-size:10.5px;color:var(--mut);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.blade .meta{font-size:11px;color:#a8b2c0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .blade .flag{margin-left:auto;font-size:10px}
 #mapwrap{position:relative}
 #map{position:absolute;inset:0;background:#e9e7e2}
@@ -116,11 +116,13 @@ const SUB={csdi:'government line, routed not observed',
            pf16:'default cfg: can’t enter termini / bus gates',
            s1:'self-overlap heal; loops only, fails open',
            s2:'bus=private@(franchised)+service kept · station-move penalty ×5'};
-let D=null,R=[],ORC={},cur=0,focus='s2',orcOp=.9;
+let D=null,R=[],ORC={},cur=0,focus='s2',orcOp=.6;
 const vis={csdi:1,pf16:0,s1:0,s2:1,oracle:1,stops:1};
 let map,layers={};
 const km=m=>m==null?'—':(m/1000).toFixed(1)+' km';
 const ll=c=>c.map(p=>[p[1],p[0]]);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function syncLegend(){for(const el of document.querySelectorAll('.lgi'))el.classList.toggle('off',!vis[el.dataset.c]);}
 
 fetch('bench_routes.json').then(r=>r.json()).then(d=>{D=d;R=d.routes;init();
   fetch('hkbus-oracle-bench.geojson').then(r=>r.ok?r.json():null).then(g=>{if(g)loadOracle(g);}).catch(()=>{});
@@ -139,7 +141,8 @@ function init(){
   L.control.zoom({position:'bottomright'}).addTo(map);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
   const rail=document.getElementById('rail');
-  const order=['terminus-miss','wrong-street','csdi-loop','ctb-manual','gmb-no-oracle','control'];
+  const known=['terminus-miss','wrong-street','csdi-loop','ctb-manual','gmb-no-oracle','control'];
+  const order=known.concat([...new Set(R.map(r=>r.kind))].filter(k=>!known.includes(k)));
   for(const k of order){
     const rs=R.map((r,i)=>[r,i]).filter(([r])=>r.kind===k);
     if(!rs.length)continue;
@@ -148,20 +151,20 @@ function init(){
       const co=coName(r.co)||'dft';
       const s2ok=r.metrics.s2&&r.metrics.s2.maxstop!=null&&r.metrics.s2.maxstop<=50;
       const b=document.createElement('div');b.className='blade';b.dataset.i=i;
-      b.innerHTML=`<span class="no ${['kmb','ctb','gmb','lwb'].includes(co)?co:'dft'}">${r.route}</span>`+
-        `<span class=meta>${r.tag}</span><span class=flag>${s2ok?'✓':'✗'}</span>`;
+      b.title=r.co.toUpperCase()+' · '+r.tag;
+      b.innerHTML=`<span class="no ${['kmb','ctb','gmb','lwb'].includes(co)?co:'dft'}">${esc(r.route)}</span>`+
+        `<span class=meta>${esc(r.co==='kmb+ctb'?'KMB+CTB · ':'')}${esc(r.tag)}</span><span class=flag>${s2ok?'✓':'✗'}</span>`;
       b.onclick=()=>{cur=i;draw()};rail.appendChild(b);
     }
   }
   for(const el of document.querySelectorAll('.lgi'))el.onclick=()=>{
-    vis[el.dataset.c]^=1;el.classList.toggle('off',!vis[el.dataset.c]);paint();panel();};
+    vis[el.dataset.c]^=1;paint();panel();syncLegend();};
   const first=document.querySelector('.blade');if(first)cur=+first.dataset.i;
   draw();
 }
 function draw(){
   document.querySelectorAll('.blade').forEach(b=>b.classList.toggle('sel',+b.dataset.i===cur));
-  paint(true);panel();
-  for(const el of document.querySelectorAll('.lgi'))el.classList.toggle('off',!vis[el.dataset.c]);
+  paint(true);panel();syncLegend();
 }
 function paint(fit){
   for(const k in layers)map.removeLayer(layers[k]);layers={};
@@ -174,11 +177,11 @@ function paint(fit){
   const orc=ORC[r.tag];
   if(vis.oracle&&orc){
     const o=ll(orc.coords);
-    layers.oracle=L.layerGroup([
+    layers.oracle=L.featureGroup([
       L.polyline(o,{color:'#04121a',weight:7,opacity:orcOp*.8,pane:'oraclePane',interactive:false}),
       L.polyline(o,{color:'#00c8ff',weight:3.5,opacity:orcOp,pane:'oraclePane',interactive:false})]).addTo(map);
   }
-  if(vis.stops)layers.stops=L.layerGroup(r.stops.map(p=>L.circleMarker([p[1],p[0]],
+  if(vis.stops)layers.stops=L.featureGroup(r.stops.map(p=>L.circleMarker([p[1],p[0]],
     {radius:3.5,color:'#8a6d00',weight:1,fillColor:'#ffd60a',fillOpacity:.95}))).addTo(map);
   if(fit){const g=L.featureGroup(Object.values(layers).filter(l=>l.getBounds&&l.getBounds().isValid()));
     if(g.getLayers().length)map.fitBounds(g.getBounds().pad(.09));}
@@ -189,31 +192,37 @@ function vRoute(r,k){
   const gmb=r.kind==='gmb-no-oracle';
   const bad=m.maxstop>100||(!gmb&&dev>300)||(gmb&&m.len_vs_stoppath>2);
   const warn=m.maxstop>50||(!gmb&&dev>150)||(gmb&&m.len_vs_stoppath>1.6);
-  if(bad)return['v-bad',gmb?`blows up to ${m.len_vs_stoppath}× the stop path`:
+  const px=' <i>(proxy — no oracle for GMB)</i>';
+  if(bad)return['v-bad',gmb?`blows up to ${m.len_vs_stoppath}× the stop path`+px:
     m.maxstop>100?`strands a stop ${m.maxstop} m off the line`:`deviates ${dev} m from the official line`];
-  if(warn)return['v-warn',gmb?`${m.len_vs_stoppath}× stop path — inspect`:
+  if(warn)return['v-warn',gmb?`${m.len_vs_stoppath}× stop path — inspect`+px:
     `worst stop ${m.maxstop} m · worst deviation ${dev} m`];
-  return['v-good',gmb?`tight: ${m.len_vs_stoppath}× stop path, stops ≤${m.maxstop} m`:
-    `stops ≤${m.maxstop} m · within ${dev||'–'} m of official`];
+  return['v-good',gmb?`tight: ${m.len_vs_stoppath}× stop path, stops ≤${m.maxstop} m`+px:
+    `stops ≤${m.maxstop} m`+(dev>0?` · within ${dev} m of official`:'')];
 }
 function panel(){
   const r=R[cur];
   const KC={'terminus-miss':['var(--pf16)','Stranded terminus'],'csdi-loop':['var(--csdi)','CSDI loop'],
     'wrong-street':['#ff6b9d','Wrong street'],'ctb-manual':['var(--ctb)','CTB manual oracle'],
     control:['var(--s2)','Control'],'gmb-no-oracle':['var(--gmb)','GMB circular']};
-  const [cc,cl]=KC[r.kind];
+  const [cc,cl]=KC[r.kind]||['var(--mut)',esc(r.kind)];
   document.getElementById('rtag').innerHTML=
-    `<div class=rn>${r.route} <span style="font-size:13px;color:var(--mut)">${r.dir==='O'?'outbound':'inbound'}</span></div>`+
-    `<div class=od>${r.tag} · ${r.co.toUpperCase()}</div>`+
+    `<div class=rn>${esc(r.route)} <span style="font-size:13px;color:var(--mut)">${r.dir==='O'?'outbound':'inbound'}</span></div>`+
+    `<div class=od>${esc(r.tag)} · ${esc(r.co.toUpperCase())}</div>`+
     `<div class=ctag style="color:${cc};border-color:${cc}">${cl}</div>`;
   const S=D.summaries;
-  const fmt=(v,best)=>v==null?'—':`<span class="${best?'win':''}">${v}</span>`;
+  const COLS=['csdi','pf16','s1','s2','s3'].filter(k=>S[k]);
+  const HD={csdi:'CSDI',pf16:'PR-16',s1:'S1',s2:'S2',s3:'S3'};
+  const ROWS=[['med max stop-dist (m)','med_maxstop'],['files w/ stop &gt;50 m','n_maxstop_gt50'],
+    ['files &gt;150 m off oracle','n_dev_gt150'],['med deviation vs oracle (m)','med_dev_o2c'],
+    ['GMB med len ÷ stop-path','gmb_med_len_vs_sp']];
   const tbl=`<table class=sc>
-    <tr><th>benchmark (33)</th><th>CSDI</th><th>PR-16</th><th>S1</th><th>S2</th><th>S3</th></tr>
-    <tr><td>med max stop-dist</td>${['csdi','pf16','s1','s2','s3'].map(k=>`<td>${fmt(S[k].med_maxstop,k==='s2')}</td>`).join('')}</tr>
-    <tr><td>files stop&gt;50 m</td>${['csdi','pf16','s1','s2','s3'].map(k=>`<td>${fmt(S[k].n_maxstop_gt50,k==='s2')}</td>`).join('')}</tr>
-    <tr><td>files &gt;150 m off oracle</td>${['csdi','pf16','s1','s2','s3'].map(k=>`<td>${fmt(S[k].n_dev_gt150,k==='s2')}</td>`).join('')}</tr>
-    <tr><td>GMB len ÷ stop-path</td>${['csdi','pf16','s1','s2','s3'].map(k=>`<td>${fmt(S[k].gmb_med_len_vs_sp,k==='s2')}</td>`).join('')}</tr></table>`;
+    <tr><th>benchmark (33) — lower is better</th>${COLS.map(k=>`<th>${HD[k]}</th>`).join('')}</tr>`+
+    ROWS.map(([lab,key])=>{
+      const vals=COLS.map(k=>S[k][key]);
+      const best=Math.min(...vals.filter(v=>v!=null));
+      return `<tr><td>${lab}</td>${vals.map(v=>`<td>${v==null?'—':`<span class="${v===best?'win':''}">${v}</span>`}</td>`).join('')}</tr>`;
+    }).join('')+`</table>`;
   let cards='';
   for(const k of ['csdi','pf16','s1','s2']){
     const m=r.metrics[k]||{};const [vc,vt]=vRoute(r,k);
@@ -227,15 +236,16 @@ function panel(){
         <span>len <b>${km(m.len_m)}</b></span></div>
       <div class="verdict ${vc}">${vt}</div></div>`;
   }
-  const pick=r.pick?`<div class=pickchip>S3 hybrid arbiter picks <b>${r.pick==='csdi'?'CSDI':'pfaedle'}</b> here — <i>${r.pick_reason}</i></div>`:'';
+  const pick=r.pick?`<div class=pickchip>S3 hybrid arbiter picks <b>${r.pick==='csdi'?'CSDI':'pfaedle'}</b> here — <i>${esc(r.pick_reason)}</i></div>`:'';
   const orc=ORC[r.tag];const nl=Object.keys(ORC).length;
   document.getElementById('panel').innerHTML=`
     <div class=gist><div class=gh>The adjudication</div>
-      <p><b style="color:var(--s2)">S2 — fixed pfaedle</b> wins every aggregate. Root cause was config,
-      not concept: HK tags franchised-bus gates <span class=mono>bus=private @ (franchised)</span> on
-      <span class=mono>highway=service</span> ways pfaedle's default profile drops — plus a
-      station-move penalty so low it "moves" termini instead of entering them. Two fixes, whole bench flips.
-      <b>S4</b> (CSDI as pfaedle input) is capability-dead: no guide-shape mode exists.</p>${tbl}</div>
+      <p><b style="color:var(--s2)">S2 — fixed pfaedle</b> is best on four of the five aggregates below;
+      CSDI keeps one edge — median deviation vs the official line (34 vs 39 m) — visible in the table,
+      green marks each row's actual best. Root cause was config, not concept: HK tags franchised-bus gates
+      <span class=mono>bus=private @ (franchised)</span> on <span class=mono>highway=service</span> ways
+      pfaedle's default profile drops — plus a station-move penalty so low it "moves" termini instead of
+      entering them. <b>S4</b> (CSDI as pfaedle input) is capability-dead: no guide-shape mode exists.</p>${tbl}</div>
     <div class=psec><h2>Candidates on this route — click to focus</h2>${pick}${cards}</div>
     <div class=psec><h2>Ground truth — official operator line</h2>
       <div class=orc-note>${nl?`<b style="color:var(--orc)">${nl}</b> official lines loaded${orc?'':' — <span style="color:var(--warn)">none for this route (GMB has no oracle API)</span>'}.`:
@@ -260,7 +270,7 @@ function panel(){
   if(op)op.oninput=e=>{orcOp=e.target.value/100;paint();};
   document.getElementById('orcfile').onchange=e=>{
     const f=e.target.files[0];if(!f)return;const rd=new FileReader();
-    rd.onload=()=>{try{loadOracle(JSON.parse(rd.result));panel();}catch(err){alert('bad file: '+err.message);}};
+    rd.onload=()=>{try{loadOracle(JSON.parse(rd.result));}catch(err){alert('bad file: '+err.message);}};
     rd.readAsText(f);};
 }
 </script></body></html>
