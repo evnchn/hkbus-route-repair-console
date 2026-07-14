@@ -124,8 +124,11 @@ const ll=c=>c.map(p=>[p[1],p[0]]);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function syncLegend(){for(const el of document.querySelectorAll('.lgi'))el.classList.toggle('off',!vis[el.dataset.c]);}
 
-fetch('bench_routes.json').then(r=>r.json()).then(d=>{D=d;R=d.routes;init();
-  fetch('hkbus-oracle-bench.geojson').then(r=>r.ok?r.json():null).then(g=>{if(g)loadOracle(g);}).catch(()=>{});
+fetch('bench_routes.json').then(r=>r.json()).then(async d=>{D=d;R=d.routes;init();
+  // oracle auto-load: co-located private file first, then the homelab-hosted copy
+  for(const u of ['hkbus-oracle-bench.geojson','https://hkbus-oracle.evnchn.io/hkbus-oracle-bench.geojson']){
+    try{const r=await fetch(u);if(r.ok){loadOracle(await r.json());break;}}catch(e){}
+  }
 });
 function loadOracle(gj){
   ORC={};
