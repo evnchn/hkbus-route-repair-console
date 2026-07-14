@@ -55,8 +55,10 @@ a{color:#5eb1ff}
 </div>
 <div id=grid></div>
 <div class=note>Ambiguous inter-stop spans where CSDI and fixed-pfaedle genuinely disagree (similar length,
-both pass automatic QC) — the fusion currently auto-picks by the terminus rule; your vote overrides it.
-Votes persist in this browser (localStorage) — <b>Export</b> and send the JSON back to apply. File format:
+both pass automatic QC). <b>Voting is optional and one-off</b> — the pipeline runs fully automatically without
+any votes (auto-pick + operator-line referee already decided 807 spans); a vote, once cast, persists in a
+committed decisions file forever — 投一次，永久生效, no recurring upkeep. Votes persist in this browser
+(localStorage) — <b>Export</b> and send the JSON back to apply. File format:
 <span style="font-family:'IBM Plex Mono'">{"file-span": "a"|"b"|"skip"}</span>.</div>
 <input type=file id=fileinp hidden accept=".json">
 <script>
