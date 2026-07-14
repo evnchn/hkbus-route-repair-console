@@ -12,7 +12,7 @@
 :root{
   --bg:#0d1013; --surf:#151a20; --surf2:#1b222b; --line:#252d38; --line2:#323c49;
   --tx:#e7eaef; --mut:#8b95a3; --dim:#5c6675;
-  --csdi:#ff453a; --pf16:#ff9f0a; --s1:#c07cf0; --s2:#32d74b; --stop:#ffd60a; --orc:#00c8ff;
+  --csdi:#ff453a; --pf16:#ff9f0a; --s1:#c07cf0; --s2:#32d74b; --s5:#e879f9; --stop:#ffd60a; --orc:#00c8ff;
   --kmb:#d81e28; --ctb:#f2b70a; --gmb:#1a7f37; --lwb:#e05c00;
   --good:#32d74b; --warn:#ff9f0a; --bad:#ff453a;
 }
@@ -100,6 +100,7 @@ a{color:#5eb1ff}
     <div class=lgi data-c=pf16><i style="background:var(--pf16)"></i>pfaedle PR-16</div>
     <div class=lgi data-c=s1><i style="background:var(--s1)"></i>S1 deloop-CSDI</div>
     <div class=lgi data-c=s2><i style="background:var(--s2)"></i>S2 fixed-pfaedle</div>
+    <div class=lgi data-c=s5><i style="background:var(--s5)"></i>S5 fusion</div>
     <div class=lgi data-c=oracle><i style="background:var(--orc)"></i>oracle</div>
     <div class=lgi data-c=stops><i style="background:var(--stop)"></i>stops</div>
   </div>
@@ -109,15 +110,17 @@ a{color:#5eb1ff}
 <aside id=panel></aside>
 </div>
 <script>
-const C={csdi:'#ff453a',pf16:'#ff9f0a',s1:'#c07cf0',s2:'#32d74b'};
+const C={csdi:'#ff453a',pf16:'#ff9f0a',s1:'#c07cf0',s2:'#32d74b',s5:'#e879f9'};
 const NAME={csdi:'CSDI — live source',pf16:'pfaedle — PR-16 (reverted)',
-            s1:'S1 · auto-deloop CSDI',s2:'S2 · fixed pfaedle (HK cfg)'};
+            s1:'S1 · auto-deloop CSDI',s2:'S2 · fixed pfaedle (HK cfg)',
+            s5:'S5 · fusion — pfaedle × CSDI'};
 const SUB={csdi:'government line, routed not observed',
            pf16:'default cfg: can’t enter termini / bus gates',
            s1:'self-overlap heal; loops only, fails open',
-           s2:'bus=private@(franchised)+service kept · station-move penalty ×5'};
-let D=null,R=[],ORC={},cur=0,focus='s2',orcOp=.6;
-const vis={csdi:1,pf16:0,s1:0,s2:1,oracle:1,stops:1};
+           s2:'bus=private@(franchised)+service kept · station-move penalty ×5',
+           s5:'per stop-to-stop span: agree→pfaedle · CSDI-loop→pfaedle · pfaedle-detour→CSDI · disputed near termini→CSDI'};
+let D=null,R=[],ORC={},cur=0,focus='s5',orcOp=.6;
+const vis={csdi:0,pf16:0,s1:0,s2:1,s5:1,oracle:1,stops:1};
 let map,layers={};
 const km=m=>m==null?'—':(m/1000).toFixed(1)+' km';
 const ll=c=>c.map(p=>[p[1],p[0]]);
@@ -152,7 +155,7 @@ function init(){
     const h=document.createElement('div');h.className='grp';h.textContent=D.kinds[k]||k;rail.appendChild(h);
     for(const [r,i] of rs){
       const co=coName(r.co)||'dft';
-      const s2ok=r.metrics.s2&&r.metrics.s2.maxstop!=null&&r.metrics.s2.maxstop<=50;
+      const s2ok=r.metrics.s5&&r.metrics.s5.maxstop!=null&&r.metrics.s5.maxstop<=50;
       const b=document.createElement('div');b.className='blade';b.dataset.i=i;
       b.title=r.co.toUpperCase()+' · '+r.tag;
       b.innerHTML=`<span class="no ${['kmb','ctb','gmb','lwb'].includes(co)?co:'dft'}">${esc(r.route)}</span>`+
@@ -172,7 +175,7 @@ function draw(){
 function paint(fit){
   for(const k in layers)map.removeLayer(layers[k]);layers={};
   const r=R[cur];
-  for(const k of ['csdi','pf16','s1','s2']){
+  for(const k of ['csdi','pf16','s1','s2','s5']){
     if(!vis[k])continue;const c=r.curves[k];if(!c)continue;
     const foc=k===focus;
     layers[k]=L.polyline(c.map(ll),{color:C[k],weight:foc?5:3,opacity:foc?1:.6}).addTo(map);
@@ -214,8 +217,8 @@ function panel(){
     `<div class=od>${esc(r.tag)} · ${esc(r.co.toUpperCase())}</div>`+
     `<div class=ctag style="color:${cc};border-color:${cc}">${cl}</div>`;
   const S=D.summaries;
-  const COLS=['csdi','pf16','s1','s2','s3'].filter(k=>S[k]);
-  const HD={csdi:'CSDI',pf16:'PR-16',s1:'S1',s2:'S2',s3:'S3'};
+  const COLS=['csdi','pf16','s1','s2','s3','s5'].filter(k=>S[k]);
+  const HD={csdi:'CSDI',pf16:'PR-16',s1:'S1',s2:'S2',s3:'S3',s5:'S5'};
   const ROWS=[['med max stop-dist (m)','med_maxstop'],['files w/ stop &gt;50 m','n_maxstop_gt50'],
     ['files &gt;150 m off oracle','n_dev_gt150'],['med deviation vs oracle (m)','med_dev_o2c'],
     ['GMB med len ÷ stop-path','gmb_med_len_vs_sp']];
@@ -227,7 +230,7 @@ function panel(){
       return `<tr><td>${lab}</td>${vals.map(v=>`<td>${v==null?'—':`<span class="${v===best?'win':''}">${v}</span>`}</td>`).join('')}</tr>`;
     }).join('')+`</table>`;
   let cards='';
-  for(const k of ['csdi','pf16','s1','s2']){
+  for(const k of ['csdi','pf16','s1','s2','s5']){
     const m=r.metrics[k]||{};const [vc,vt]=vRoute(r,k);
     cards+=`<div class="cand ${k===focus?'focus':''}" data-k=${k}>
       <div class=top><span class=dot style="background:${C[k]}"></span>
