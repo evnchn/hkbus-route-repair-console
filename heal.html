@@ -41,6 +41,7 @@ a{color:#5eb1ff}
  <label>type <select id=wsel><option value=all>all</option><option>loop</option><option>circuit</option></select></label>
  <label>company <select id=asel><option value=all>all</option></select></label>
  <label>status <select id=ssel><option value=all>all</option><option value=patched selected>patched</option><option value=review>review (not applied)</option></select></label>
+ <label>evidence <select id=tsel><option value=all>all</option><option value=oracle-direct>oracle direct</option><option value=oracle-shared>oracle via sibling</option><option value=multi-route>multi-route</option><option value=singleton>singleton</option></select></label>
  <label>oracle <select id=osel><option value=all>all</option><option value=conf>confirmed better</option><option value=none>no oracle</option></select></label>
  <input type=search id=q placeholder="route…" size=8>
  <label>top <select id=nsel><option>60</option><option>150</option><option value=99999>all</option></select> by km removed</label>
@@ -59,6 +60,11 @@ Routes with no patch are untouched CSDI, bit for bit; within a patched route onl
 change. Routes whose geometry can't be decomposed safely are skipped by design. Suspected wrong-circuits
 that lack both the self-overlap signature and an operator line to confirm them are <b>held for review</b>
 (shown amber here) and NOT applied — precision over recall.
+<br><br><b>Why we're confident the loops are bogus.</b> CSDI geometry is machine-routed, so a mis-solved
+segment is stamped <i>identically</i> into every route that passes it — a defect recurring across many
+routes is a data artifact, not a service detour (one cluster repeats in 25 airport E-routes). Clustering the
+excursions also lets operator-line evidence transfer: a loop refuted by KMB's own line on one route refutes
+the byte-identical loop on a sibling route that has no oracle. Every card carries its evidence badge.
 <br><br><b>Maintenance profile: one-off.</b> The patch set is a static artifact; no recurring human effort.
 Each patch is keyed to the defect it fixes, so if a future CSDI release fixes the defect upstream, the patch
 retires itself.
@@ -80,6 +86,9 @@ fetch("heal_spans.json").then(r=>r.json()).then(D=>{
     `<b>${routes.size}</b> route-dirs healed · <b>${P.length}</b> segments patched · <b>${km.toFixed(0)} km</b> of bogus geometry removed · ` +
     `operator-line check: <b style="color:var(--b)">${conf} better</b> / ${tie} tie / <b>0 worse</b> / ${none} no oracle · ` +
     `<b>${D.length-P.length}</b> suspects held for review (not applied)`;
+  const T = {};
+  P.forEach(r=>T[r.tier]=(T[r.tier]||0)+1);
+  document.getElementById("stats").innerHTML += `<br>evidence: <b>${T["oracle-direct"]||0}</b> refuted by the operator's own line · <b>${T["oracle-shared"]||0}</b> same defect refuted on a sibling route · <b>${T["multi-route"]||0}</b> systematic (identical defect stamped into ≥2 routes by CSDI's routing engine) · <b>${T["singleton"]||0}</b> singleton (validated self-overlap detector only)`;
   const asel = document.getElementById("asel");
   [...new Set(D.map(r=>AG(r.agency)))].sort().forEach(a=>{const o=document.createElement("option");o.textContent=a;asel.appendChild(o);});
   const grid = document.getElementById("grid");
@@ -93,6 +102,7 @@ fetch("heal_spans.json").then(r=>r.json()).then(D=>{
     const s=document.getElementById("ssel").value;
     let rows = D.filter(r =>
       (s==="all"||(r.status==="review"?"review":"patched")===s) &&
+      (document.getElementById("tsel").value==="all"||r.tier===document.getElementById("tsel").value) &&
       (w==="all"||r.why===w) && (a==="all"||AG(r.agency)===a) &&
       (o==="all" || (o==="none" ? !r.oracle : /A=(\d+) B=(\d+)/.test(r.oracle||"") && (m=>+m[2]<+m[1]-5)(/A=(\d+) B=(\d+)/.exec(r.oracle)))) &&
       (!q || r.route.toUpperCase()===q || r.route.toUpperCase().startsWith(q)));
@@ -107,11 +117,17 @@ fetch("heal_spans.json").then(r=>r.json()).then(D=>{
           : `<span>KMB line: ~tie (${om[1]}/${om[2]} m)`+"</span>")
         : `<span class=na>no operator line (visual check welcome)</span>`;
       const rev = r.status==="review" ? `<span class=tag style="color:#ff9f0a;border-color:#ff9f0a88">REVIEW · not applied</span>` : "";
+      const TIER = {"oracle-direct":["✓ operator line","#32d74b"],
+                    "oracle-shared":["✓ operator line via sibling route","#64d2ff"],
+                    "multi-route":[`systematic: same defect in ${r.cluster_routes} routes`,"#5eb1ff"],
+                    "singleton":["singleton","#8b95a3"]};
+      const tb = TIER[r.tier]||TIER.singleton;
+      const tierTag = `<span class=tag style="color:${tb[1]};border-color:${tb[1]}55">${tb[0]}</span>`;
       c.innerHTML = `<div class=chd><span class="rno ${AG(r.agency)}">${r.route}</span>${rev}
         <span class=meta>${r.dir==="O"?"outbound":"inbound"} · ${r.from} → ${r.to}</span>
         <span class=saved>−${(r.saved_m/1000).toFixed(1)} km</span></div>
         <div class=map></div>
-        <div class=why><span class=tag>${r.why}</span><span>CSDI ${r.len_cs} m → ${r.len_pf} m</span>${otxt}</div>`;
+        <div class=why><span class=tag>${r.why}</span>${tierTag}<span>CSDI ${r.len_cs} m → ${r.len_pf} m</span>${otxt}</div>`;
       grid.appendChild(c);
       const map = L.map(c.querySelector(".map"),{scrollWheelZoom:false,attributionControl:false});
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19}).addTo(map);
@@ -121,7 +137,7 @@ fetch("heal_spans.json").then(r=>r.json()).then(D=>{
       maps.push(map);
     });
   }
-  ["ssel","wsel","asel","osel","nsel"].forEach(id=>document.getElementById(id).onchange=render);
+  ["ssel","tsel","wsel","asel","osel","nsel"].forEach(id=>document.getElementById(id).onchange=render);
   document.getElementById("q").oninput=render;
   render();
 });

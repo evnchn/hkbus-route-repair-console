@@ -1,0 +1,1375 @@
+[
+ {
+  "cid": 0,
+  "n_spans": 28,
+  "routes": [
+   "E11",
+   "E11A",
+   "E21",
+   "E21D",
+   "E23",
+   "E23A",
+   "E32",
+   "E33",
+   "E33P",
+   "E36",
+   "E36C",
+   "E36P",
+   "E36S",
+   "E37",
+   "E37C",
+   "E41",
+   "E42",
+   "E42C",
+   "N11",
+   "N21",
+   "N21A",
+   "N30",
+   "N31",
+   "N42",
+   "N42A"
+  ],
+  "oracle_confirmed": false,
+  "example": "1000027-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 1,
+  "n_spans": 19,
+  "routes": [
+   "A23",
+   "A26",
+   "A28",
+   "A29",
+   "A30",
+   "A31",
+   "A33",
+   "A33X",
+   "A34",
+   "A36",
+   "A37",
+   "A43P",
+   "N11",
+   "N42",
+   "N42A"
+  ],
+  "oracle_confirmed": true,
+  "example": "1000088-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 2,
+  "n_spans": 18,
+  "routes": [
+   "1",
+   "1A",
+   "2",
+   "234X",
+   "271",
+   "271B",
+   "271X",
+   "281A",
+   "296D",
+   "37X",
+   "50",
+   "6",
+   "7",
+   "79P",
+   "N21",
+   "N21A",
+   "N50"
+  ],
+  "oracle_confirmed": true,
+  "example": "1000532-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 3,
+  "n_spans": 16,
+  "routes": [
+   "373",
+   "73",
+   "73A",
+   "73B",
+   "74D",
+   "N373",
+   "N73"
+  ],
+  "oracle_confirmed": true,
+  "example": "1194-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 4,
+  "n_spans": 13,
+  "routes": [
+   "290X",
+   "797",
+   "98D",
+   "N290",
+   "N796"
+  ],
+  "oracle_confirmed": false,
+  "example": "8795-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 5,
+  "n_spans": 12,
+  "routes": [
+   "107P",
+   "30X",
+   "33X",
+   "38",
+   "40P",
+   "47P",
+   "48",
+   "970",
+   "971",
+   "A10",
+   "NA10"
+  ],
+  "oracle_confirmed": true,
+  "example": "1000304-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 6,
+  "n_spans": 10,
+  "routes": [
+   "A35",
+   "B5",
+   "B6",
+   "B6S",
+   "N35",
+   "NA31",
+   "NA32"
+  ],
+  "oracle_confirmed": false,
+  "example": "8575-O.json",
+  "statuses": [
+   "review"
+  ]
+ },
+ {
+  "cid": 7,
+  "n_spans": 9,
+  "routes": [
+   "N11",
+   "N21",
+   "N21A",
+   "N23",
+   "N26",
+   "N29",
+   "N42",
+   "N42A",
+   "N64"
+  ],
+  "oracle_confirmed": false,
+  "example": "1696-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 8,
+  "n_spans": 8,
+  "routes": [
+   "E37C",
+   "E42C",
+   "N21",
+   "N23",
+   "N42",
+   "N42A"
+  ],
+  "oracle_confirmed": false,
+  "example": "1458-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 9,
+  "n_spans": 7,
+  "routes": [
+   "109",
+   "18",
+   "241X",
+   "45",
+   "7B",
+   "8",
+   "A20"
+  ],
+  "oracle_confirmed": true,
+  "example": "1000368-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 10,
+  "n_spans": 7,
+  "routes": [
+   "109",
+   "18",
+   "241X",
+   "45",
+   "7B",
+   "8",
+   "A20"
+  ],
+  "oracle_confirmed": true,
+  "example": "1000368-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 11,
+  "n_spans": 7,
+  "routes": [
+   "50",
+   "55",
+   "950",
+   "955",
+   "N260",
+   "N50"
+  ],
+  "oracle_confirmed": true,
+  "example": "1000454-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 12,
+  "n_spans": 7,
+  "routes": [
+   "11B",
+   "61X",
+   "6C",
+   "6F",
+   "75X",
+   "85A",
+   "A25"
+  ],
+  "oracle_confirmed": true,
+  "example": "1027-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 13,
+  "n_spans": 7,
+  "routes": [
+   "11B",
+   "61X",
+   "6C",
+   "6F",
+   "75X",
+   "85A",
+   "A25"
+  ],
+  "oracle_confirmed": true,
+  "example": "1027-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 14,
+  "n_spans": 7,
+  "routes": [
+   "373",
+   "73",
+   "73A",
+   "73B",
+   "N373",
+   "N73"
+  ],
+  "oracle_confirmed": true,
+  "example": "1194-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 15,
+  "n_spans": 7,
+  "routes": [
+   "18",
+   "18P",
+   "720",
+   "780",
+   "788",
+   "936A"
+  ],
+  "oracle_confirmed": true,
+  "example": "1751-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 16,
+  "n_spans": 6,
+  "routes": [
+   "251C",
+   "A36",
+   "E36",
+   "NA36"
+  ],
+  "oracle_confirmed": true,
+  "example": "1000025-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 17,
+  "n_spans": 6,
+  "routes": [
+   "15"
+  ],
+  "oracle_confirmed": true,
+  "example": "8601-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 18,
+  "n_spans": 5,
+  "routes": [
+   "111P",
+   "28B",
+   "2X",
+   "9"
+  ],
+  "oracle_confirmed": false,
+  "example": "1498-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 19,
+  "n_spans": 5,
+  "routes": [
+   "251C",
+   "A36",
+   "NA36"
+  ],
+  "oracle_confirmed": true,
+  "example": "8295-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 20,
+  "n_spans": 4,
+  "routes": [
+   "2",
+   "2X",
+   "720"
+  ],
+  "oracle_confirmed": false,
+  "example": "1519-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 21,
+  "n_spans": 4,
+  "routes": [
+   "83K",
+   "90",
+   "A41"
+  ],
+  "oracle_confirmed": false,
+  "example": "1000445-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 22,
+  "n_spans": 4,
+  "routes": [
+   "97",
+   "P960",
+   "P968"
+  ],
+  "oracle_confirmed": true,
+  "example": "1000044-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 23,
+  "n_spans": 3,
+  "routes": [
+   "19",
+   "600"
+  ],
+  "oracle_confirmed": false,
+  "example": "1000602-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 24,
+  "n_spans": 3,
+  "routes": [
+   "H1",
+   "H2K"
+  ],
+  "oracle_confirmed": false,
+  "example": "1475-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 25,
+  "n_spans": 3,
+  "routes": [
+   "973"
+  ],
+  "oracle_confirmed": false,
+  "example": "1667-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 26,
+  "n_spans": 3,
+  "routes": [
+   "272X",
+   "A47X",
+   "NA47"
+  ],
+  "oracle_confirmed": true,
+  "example": "1000290-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 27,
+  "n_spans": 3,
+  "routes": [
+   "258P",
+   "B3A"
+  ],
+  "oracle_confirmed": false,
+  "example": "1690-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 28,
+  "n_spans": 3,
+  "routes": [
+   "A12",
+   "A41P",
+   "A47X"
+  ],
+  "oracle_confirmed": true,
+  "example": "8361-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 29,
+  "n_spans": 2,
+  "routes": [
+   "104",
+   "900"
+  ],
+  "oracle_confirmed": false,
+  "example": "1000016-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 30,
+  "n_spans": 2,
+  "routes": [
+   "NR61",
+   "NR88"
+  ],
+  "oracle_confirmed": false,
+  "example": "1000091-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 31,
+  "n_spans": 2,
+  "routes": [
+   "88K",
+   "A46"
+  ],
+  "oracle_confirmed": true,
+  "example": "1000448-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 32,
+  "n_spans": 2,
+  "routes": [
+   "73K"
+  ],
+  "oracle_confirmed": true,
+  "example": "1000680-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 33,
+  "n_spans": 2,
+  "routes": [
+   "59A",
+   "67A"
+  ],
+  "oracle_confirmed": false,
+  "example": "1246-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 34,
+  "n_spans": 2,
+  "routes": [
+   "A10",
+   "NA10"
+  ],
+  "oracle_confirmed": false,
+  "example": "1671-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 35,
+  "n_spans": 2,
+  "routes": [
+   "171",
+   "N90"
+  ],
+  "oracle_confirmed": false,
+  "example": "8448-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 36,
+  "n_spans": 2,
+  "routes": [
+   "278A"
+  ],
+  "oracle_confirmed": false,
+  "example": "8480-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 37,
+  "n_spans": 2,
+  "routes": [
+   "HK1"
+  ],
+  "oracle_confirmed": false,
+  "example": "1000542-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 38,
+  "n_spans": 2,
+  "routes": [
+   "1A",
+   "88"
+  ],
+  "oracle_confirmed": false,
+  "example": "8473-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 39,
+  "n_spans": 2,
+  "routes": [
+   "276P",
+   "53"
+  ],
+  "oracle_confirmed": true,
+  "example": "1240-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 40,
+  "n_spans": 2,
+  "routes": [
+   "4"
+  ],
+  "oracle_confirmed": false,
+  "example": "1545-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 41,
+  "n_spans": 1,
+  "routes": [
+   "78P"
+  ],
+  "oracle_confirmed": false,
+  "example": "1000485-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 42,
+  "n_spans": 1,
+  "routes": [
+   "16"
+  ],
+  "oracle_confirmed": true,
+  "example": "1044-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 43,
+  "n_spans": 1,
+  "routes": [
+   "373"
+  ],
+  "oracle_confirmed": true,
+  "example": "1194-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 44,
+  "n_spans": 1,
+  "routes": [
+   "373"
+  ],
+  "oracle_confirmed": true,
+  "example": "1194-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 45,
+  "n_spans": 1,
+  "routes": [
+   "42C"
+  ],
+  "oracle_confirmed": true,
+  "example": "1215-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 46,
+  "n_spans": 1,
+  "routes": [
+   "690"
+  ],
+  "oracle_confirmed": true,
+  "example": "1289-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 47,
+  "n_spans": 1,
+  "routes": [
+   "K17"
+  ],
+  "oracle_confirmed": false,
+  "example": "1427-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 48,
+  "n_spans": 1,
+  "routes": [
+   "720P"
+  ],
+  "oracle_confirmed": false,
+  "example": "1603-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 49,
+  "n_spans": 1,
+  "routes": [
+   "81A"
+  ],
+  "oracle_confirmed": false,
+  "example": "1627-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 50,
+  "n_spans": 1,
+  "routes": [
+   "A29"
+  ],
+  "oracle_confirmed": false,
+  "example": "1680-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 51,
+  "n_spans": 1,
+  "routes": [
+   "E22C"
+  ],
+  "oracle_confirmed": false,
+  "example": "8287-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 52,
+  "n_spans": 1,
+  "routes": [
+   "X42P"
+  ],
+  "oracle_confirmed": true,
+  "example": "8532-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 53,
+  "n_spans": 1,
+  "routes": [
+   "608"
+  ],
+  "oracle_confirmed": false,
+  "example": "8625-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 54,
+  "n_spans": 1,
+  "routes": [
+   "274"
+  ],
+  "oracle_confirmed": false,
+  "example": "8628-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 55,
+  "n_spans": 1,
+  "routes": [
+   "98B"
+  ],
+  "oracle_confirmed": true,
+  "example": "8734-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 56,
+  "n_spans": 1,
+  "routes": [
+   "287P"
+  ],
+  "oracle_confirmed": true,
+  "example": "1000035-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 57,
+  "n_spans": 1,
+  "routes": [
+   "272X"
+  ],
+  "oracle_confirmed": false,
+  "example": "1000290-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 58,
+  "n_spans": 1,
+  "routes": [
+   "55"
+  ],
+  "oracle_confirmed": false,
+  "example": "1000648-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 59,
+  "n_spans": 1,
+  "routes": [
+   "93K"
+  ],
+  "oracle_confirmed": true,
+  "example": "1403-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 60,
+  "n_spans": 1,
+  "routes": [
+   "213M"
+  ],
+  "oracle_confirmed": false,
+  "example": "8343-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 61,
+  "n_spans": 1,
+  "routes": [
+   "46P"
+  ],
+  "oracle_confirmed": false,
+  "example": "8178-O.json",
+  "statuses": [
+   "review"
+  ]
+ },
+ {
+  "cid": 62,
+  "n_spans": 1,
+  "routes": [
+   "50"
+  ],
+  "oracle_confirmed": false,
+  "example": "1000243-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 63,
+  "n_spans": 1,
+  "routes": [
+   "15"
+  ],
+  "oracle_confirmed": true,
+  "example": "1041-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 64,
+  "n_spans": 1,
+  "routes": [
+   "671"
+  ],
+  "oracle_confirmed": true,
+  "example": "1278-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 65,
+  "n_spans": 1,
+  "routes": [
+   "89D"
+  ],
+  "oracle_confirmed": true,
+  "example": "1387-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 66,
+  "n_spans": 1,
+  "routes": [
+   "E22"
+  ],
+  "oracle_confirmed": false,
+  "example": "1678-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 67,
+  "n_spans": 1,
+  "routes": [
+   "24"
+  ],
+  "oracle_confirmed": false,
+  "example": "8721-O.json",
+  "statuses": [
+   "review"
+  ]
+ },
+ {
+  "cid": 68,
+  "n_spans": 1,
+  "routes": [
+   "33B"
+  ],
+  "oracle_confirmed": true,
+  "example": "1000085-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 69,
+  "n_spans": 1,
+  "routes": [
+   "79X"
+  ],
+  "oracle_confirmed": false,
+  "example": "1000199-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 70,
+  "n_spans": 1,
+  "routes": [
+   "W2"
+  ],
+  "oracle_confirmed": true,
+  "example": "1000330-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 71,
+  "n_spans": 1,
+  "routes": [
+   "78C"
+  ],
+  "oracle_confirmed": false,
+  "example": "1000402-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 72,
+  "n_spans": 1,
+  "routes": [
+   "215X"
+  ],
+  "oracle_confirmed": true,
+  "example": "1061-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 73,
+  "n_spans": 1,
+  "routes": [
+   "276"
+  ],
+  "oracle_confirmed": true,
+  "example": "1137-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 74,
+  "n_spans": 1,
+  "routes": [
+   "276"
+  ],
+  "oracle_confirmed": true,
+  "example": "1137-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 75,
+  "n_spans": 1,
+  "routes": [
+   "8X"
+  ],
+  "oracle_confirmed": false,
+  "example": "1636-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 76,
+  "n_spans": 1,
+  "routes": [
+   "15X"
+  ],
+  "oracle_confirmed": true,
+  "example": "8130-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 77,
+  "n_spans": 1,
+  "routes": [
+   "98A"
+  ],
+  "oracle_confirmed": false,
+  "example": "8683-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 78,
+  "n_spans": 1,
+  "routes": [
+   "A29"
+  ],
+  "oracle_confirmed": false,
+  "example": "1000079-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 79,
+  "n_spans": 1,
+  "routes": [
+   "W2"
+  ],
+  "oracle_confirmed": true,
+  "example": "1000331-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 80,
+  "n_spans": 1,
+  "routes": [
+   "49A"
+  ],
+  "oracle_confirmed": true,
+  "example": "1000564-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 81,
+  "n_spans": 1,
+  "routes": [
+   "89P"
+  ],
+  "oracle_confirmed": true,
+  "example": "1000570-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 82,
+  "n_spans": 1,
+  "routes": [
+   "63"
+  ],
+  "oracle_confirmed": true,
+  "example": "1000684-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 83,
+  "n_spans": 1,
+  "routes": [
+   "297"
+  ],
+  "oracle_confirmed": true,
+  "example": "1161-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 84,
+  "n_spans": 1,
+  "routes": [
+   "89P"
+  ],
+  "oracle_confirmed": true,
+  "example": "1388-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 85,
+  "n_spans": 1,
+  "routes": [
+   "E22A"
+  ],
+  "oracle_confirmed": false,
+  "example": "1679-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 86,
+  "n_spans": 1,
+  "routes": [
+   "A22"
+  ],
+  "oracle_confirmed": false,
+  "example": "1807-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 87,
+  "n_spans": 1,
+  "routes": [
+   "37P"
+  ],
+  "oracle_confirmed": false,
+  "example": "1959-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 88,
+  "n_spans": 1,
+  "routes": [
+   "X42C"
+  ],
+  "oracle_confirmed": false,
+  "example": "8230-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 89,
+  "n_spans": 1,
+  "routes": [
+   "E22X"
+  ],
+  "oracle_confirmed": false,
+  "example": "8236-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 90,
+  "n_spans": 1,
+  "routes": [
+   "NA29"
+  ],
+  "oracle_confirmed": false,
+  "example": "8267-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 91,
+  "n_spans": 1,
+  "routes": [
+   "X42C"
+  ],
+  "oracle_confirmed": true,
+  "example": "8540-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 92,
+  "n_spans": 1,
+  "routes": [
+   "E36P"
+  ],
+  "oracle_confirmed": false,
+  "example": "1000027-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 93,
+  "n_spans": 1,
+  "routes": [
+   "268"
+  ],
+  "oracle_confirmed": true,
+  "example": "1000607-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 94,
+  "n_spans": 1,
+  "routes": [
+   "X42C"
+  ],
+  "oracle_confirmed": true,
+  "example": "1000645-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 95,
+  "n_spans": 1,
+  "routes": [
+   "297"
+  ],
+  "oracle_confirmed": true,
+  "example": "1161-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 96,
+  "n_spans": 1,
+  "routes": [
+   "E22S"
+  ],
+  "oracle_confirmed": false,
+  "example": "1683-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 97,
+  "n_spans": 1,
+  "routes": [
+   "E22S"
+  ],
+  "oracle_confirmed": false,
+  "example": "1683-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 98,
+  "n_spans": 1,
+  "routes": [
+   "E22S"
+  ],
+  "oracle_confirmed": false,
+  "example": "1683-O.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 99,
+  "n_spans": 1,
+  "routes": [
+   "N29"
+  ],
+  "oracle_confirmed": false,
+  "example": "1893-I.json",
+  "statuses": [
+   "patched"
+  ]
+ },
+ {
+  "cid": 100,
+  "n_spans": 1,
+  "routes": [
+   "89P"
+  ],
+  "oracle_confirmed": false,
+  "example": "8520-O.json",
+  "statuses": [
+   "patched"
+  ]
+ }
+]
