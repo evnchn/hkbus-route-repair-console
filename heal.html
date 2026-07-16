@@ -1,0 +1,120 @@
+<!doctype html><html lang=en><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>Targeted CSDI healing · hkbus route repair</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🩹</text></svg>">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d1013;--surf:#151a20;--surf2:#1b222b;--line:#252d38;--line2:#323c49;--tx:#e7eaef;
+--mut:#8b95a3;--dim:#5c6675;--a:#ff453a;--b:#32d74b;--kmb:#d81e28}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 Inter,system-ui,sans-serif}
+header{display:flex;align-items:center;gap:16px;padding:12px 20px;border-bottom:1px solid var(--line);
+ position:sticky;top:0;background:rgba(13,16,19,.95);backdrop-filter:blur(8px);z-index:1200;flex-wrap:wrap}
+h1{font:600 18px Oswald;margin:0;text-transform:uppercase;letter-spacing:.5px}
+h1 span{color:var(--b)}
+#stats{color:var(--mut);font-size:12.5px}
+#stats b{color:var(--tx)}
+.filterbar{display:flex;gap:10px;align-items:center;padding:10px 20px;border-bottom:1px solid var(--line);color:var(--mut);font-size:12.5px;flex-wrap:wrap}
+select,input[type=search]{background:var(--surf2);color:var(--tx);border:1px solid var(--line2);border-radius:7px;padding:5px 8px;font:inherit}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(430px,1fr));gap:14px;padding:16px 20px;max-width:1900px;margin:0 auto}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.chd{display:flex;align-items:center;gap:8px;padding:9px 12px}
+.rno{font:600 14px Oswald;background:var(--kmb);color:#fff;border-radius:4px;padding:2px 7px}
+.rno.CTB{background:#ffd60a;color:#111}.rno.NLB{background:#00a04b}.rno.LWB{background:#f97316}
+.meta{font-size:11.5px;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.saved{font:600 12px "IBM Plex Mono";color:var(--b);white-space:nowrap}
+.map{height:270px;background:#e9e7e2}
+.leaflet-tile{filter:grayscale(1) contrast(.92) brightness(1.04) opacity(.55)}
+.why{font:11px "IBM Plex Mono";color:var(--dim);padding:8px 12px;display:flex;gap:10px;flex-wrap:wrap}
+.why .ok{color:var(--b)} .why .na{color:var(--dim)}
+.tag{border:1px solid var(--line2);border-radius:5px;padding:1px 6px}
+.note{color:var(--dim);font-size:12px;padding:14px 20px;max-width:980px;line-height:1.7}
+a{color:#5eb1ff}
+</style></head><body>
+<header><h1>Targeted <span>CSDI healing</span></h1><div id=stats></div></header>
+<div class=filterbar>
+ <span><i style="display:inline-block;width:16px;height:4px;border-radius:2px;background:var(--a)"></i> removed CSDI defect</span>
+ <span><i style="display:inline-block;width:16px;height:4px;border-radius:2px;background:var(--b)"></i> patch (OSM-matched)</span>
+ <label>type <select id=wsel><option value=all>all</option><option>loop</option><option>circuit</option></select></label>
+ <label>company <select id=asel><option value=all>all</option></select></label>
+ <label>oracle <select id=osel><option value=all>all</option><option value=conf>confirmed better</option><option value=none>no oracle</option></select></label>
+ <input type=search id=q placeholder="route…" size=8>
+ <label>top <select id=nsel><option>60</option><option>150</option><option value=99999>all</option></select> by km removed</label>
+ <span id=cnt></span>
+</div>
+<div id=grid></div>
+<div class=note id=explain>
+<b>What this is.</b> CSDI (the government dataset hkbus already uses) stays the baseline for <i>every</i> route.
+This page shows the <b>only</b> places a patch is applied: inter-stop segments where CSDI provably drew a
+defect — an out-and-back retrace (<span class=tag>loop</span>, self-overlap collapse ≥ 20%, the discriminator
+validated 26/26 vs KMB with 0 false positives) or a grossly inflated wrong circuit
+(<span class=tag>circuit</span>, ≥3× the road alternative and ≥800 m excess). The patch is the OSM
+map-matched path for that segment only, and is applied only if it passes road/turn QC itself; where the
+operator's own line (KMB/LWB search API) exists, a patch that disagrees with it is vetoed.
+Everything not shown here is byte-identical CSDI — routes whose geometry can't be decomposed safely are left
+untouched by design.
+<br><br><b>Maintenance profile: one-off.</b> The patch set is a static artifact; no recurring human effort.
+Each patch is keyed to the defect it fixes, so if a future CSDI release fixes the defect upstream, the patch
+retires itself.
+</div>
+<script>
+const AG = a => (a||"").split("+")[0];
+fetch("heal_spans.json").then(r=>r.json()).then(D=>{
+  const routes = new Set(D.map(r=>r.file));
+  const km = D.reduce((s,r)=>s+r.saved_m,0)/1000;
+  let conf=0, tie=0, none=0;
+  D.forEach(r=>{
+    const m = /A=(\d+) B=(\d+)/.exec(r.oracle||"");
+    if(!m) none++;
+    else if(+m[2] < +m[1]-5) conf++;
+    else tie++;
+  });
+  document.getElementById("stats").innerHTML =
+    `<b>${routes.size}</b> route-dirs healed · <b>${D.length}</b> segments · <b>${km.toFixed(0)} km</b> of bogus geometry removed · ` +
+    `operator-line check: <b style="color:var(--b)">${conf} better</b> / ${tie} tie / <b>0 worse</b> / ${none} no oracle`;
+  const asel = document.getElementById("asel");
+  [...new Set(D.map(r=>AG(r.agency)))].sort().forEach(a=>{const o=document.createElement("option");o.textContent=a;asel.appendChild(o);});
+  const grid = document.getElementById("grid");
+  const maps = [];
+  function render(){
+    maps.forEach(m=>m.remove()); maps.length=0; grid.innerHTML="";
+    const w=document.getElementById("wsel").value, a=asel.value,
+          o=document.getElementById("osel").value,
+          q=document.getElementById("q").value.trim().toUpperCase(),
+          n=+document.getElementById("nsel").value;
+    let rows = D.filter(r =>
+      (w==="all"||r.why===w) && (a==="all"||AG(r.agency)===a) &&
+      (o==="all" || (o==="none" ? !r.oracle : /A=(\d+) B=(\d+)/.test(r.oracle||"") && (m=>+m[2]<+m[1]-5)(/A=(\d+) B=(\d+)/.exec(r.oracle)))) &&
+      (!q || r.route.toUpperCase()===q || r.route.toUpperCase().startsWith(q)));
+    rows.sort((x,y)=>y.saved_m-x.saved_m);
+    document.getElementById("cnt").textContent = `${Math.min(n,rows.length)} of ${rows.length} shown`;
+    rows.slice(0,n).forEach(r=>{
+      const c=document.createElement("div"); c.className="card";
+      const om = /A=(\d+) B=(\d+)/.exec(r.oracle||"");
+      const otxt = om ? (+om[2] < +om[1]-5
+          ? `<span class=ok>✓ KMB line: patch ${om[2]} m vs CSDI ${om[1]} m</span>`
+          : `<span>KMB line: ~tie (${om[1]}/${om[2]} m)`+"</span>")
+        : `<span class=na>no operator line (visual check welcome)</span>`;
+      c.innerHTML = `<div class=chd><span class="rno ${AG(r.agency)}">${r.route}</span>
+        <span class=meta>${r.dir==="O"?"outbound":"inbound"} · ${r.from} → ${r.to}</span>
+        <span class=saved>−${(r.saved_m/1000).toFixed(1)} km</span></div>
+        <div class=map></div>
+        <div class=why><span class=tag>${r.why}</span><span>CSDI ${r.len_cs} m → ${r.len_pf} m</span>${otxt}</div>`;
+      grid.appendChild(c);
+      const map = L.map(c.querySelector(".map"),{scrollWheelZoom:false,attributionControl:false});
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19}).addTo(map);
+      const A = L.polyline(r.a.map(p=>[p[1],p[0]]),{color:"#ff453a",weight:3,opacity:.85,dashArray:"6 5"}).addTo(map);
+      L.polyline(r.b.map(p=>[p[1],p[0]]),{color:"#32d74b",weight:4,opacity:.9}).addTo(map);
+      map.fitBounds(A.getBounds().pad(0.12));
+      maps.push(map);
+    });
+  }
+  ["wsel","asel","osel","nsel"].forEach(id=>document.getElementById(id).onchange=render);
+  document.getElementById("q").oninput=render;
+  render();
+});
+</script>
+</body></html>
