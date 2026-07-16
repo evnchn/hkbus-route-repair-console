@@ -58,7 +58,7 @@ border-radius:9px;padding:8px 12px;font-size:12px;max-width:70%}
 </header>
 <div id=list></div>
 <div id=mapwrap><div id=map></div><div id=mtag>click a route — geometry loads on demand</div>
-<div id=known><span class=x onclick="this.parentNode.remove()">✕</span>⚠ 已知問題 known issues: ~65 route-dirs where fusion picked the worse source vs the operators' line (incl. 214/88/N214 near 彩雲邨) — under fix, list in the audit; 屯赤/機場 A-routes lag the recent rerouting in ALL sources; oracle (cyan) covers KMB/LWB only (~56%). Found something off? 逐段投票 → <a href="hitl.html">A-or-B review</a></div>
+<div id=known><span class=x onclick="this.parentNode.remove()">✕</span>⚠ status: the ~65 wrong-picks flagged earlier are FIXED (operator-line referee votes); this page is now a research view — the actual proposed upstream fix is deliberately minimal: the 九龍城碼頭/中九龍繞道 phantom only, see <a href="heal.html">heal</a> · <a href="delta.html">threshold explorer</a>. Caveats: 屯赤/機場 A-routes lag recent rerouting in ALL sources; oracle (cyan) covers KMB/LWB only (~56%). 逐段投票 → <a href="hitl.html">A-or-B review</a></div>
 <div id=ltog style="position:absolute;bottom:12px;left:10px;z-index:900;background:rgba(13,16,19,.9);border:1px solid var(--line2);border-radius:9px;padding:7px 10px;display:flex;gap:11px;font-size:12px">
  <span class=tg data-k=fused style="cursor:pointer"><i style="display:inline-block;width:14px;height:4px;border-radius:2px;background:#32d74b"></i> fused</span>
  <span class=tg data-k=csdi style="cursor:pointer"><i style="display:inline-block;width:14px;height:4px;border-radius:2px;background:#ff453a"></i> CSDI</span>
