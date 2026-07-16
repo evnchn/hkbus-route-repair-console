@@ -1,0 +1,96 @@
+<!doctype html><html lang=en><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>Threshold explorer · CSDI vs pfaedle length delta</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📏</text></svg>">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d1013;--surf:#151a20;--surf2:#1b222b;--line:#252d38;--line2:#323c49;--tx:#e7eaef;
+--mut:#8b95a3;--dim:#5c6675;--a:#ff453a;--b:#32d74b;--kmb:#d81e28}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font:14px/1.5 Inter,system-ui,sans-serif}
+#app{display:grid;grid-template-columns:560px 1fr;grid-template-rows:auto 1fr;height:100vh}
+header{grid-column:1/-1;display:flex;align-items:center;gap:16px;padding:11px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+h1{font:600 18px Oswald;margin:0;text-transform:uppercase;letter-spacing:.5px}
+h1 span{color:#5eb1ff}
+#ctl{display:flex;align-items:center;gap:10px;color:var(--mut);font-size:13px}
+#thr{width:220px}
+#count b{color:var(--tx)}
+#list{overflow-y:auto;border-right:1px solid var(--line)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{position:sticky;top:0;background:var(--surf);text-align:left;padding:7px 10px;color:var(--dim);font:600 10.5px Oswald;letter-spacing:.8px;text-transform:uppercase;border-bottom:1px solid var(--line)}
+td{padding:6px 10px;border-bottom:1px solid var(--line)}
+tr.row{cursor:pointer} tr.row:hover{background:var(--surf2)} tr.row.sel{background:var(--surf2);outline:1px solid var(--line2)}
+.rno{font:600 12.5px Oswald;background:var(--kmb);color:#fff;border-radius:4px;padding:1px 6px;display:inline-block;min-width:38px;text-align:center}
+.rno.CTB{background:#ffd60a;color:#111}.rno.NLB{background:#00a04b}.rno.LWB{background:#f97316}
+.mono{font-family:"IBM Plex Mono";font-variant-numeric:tabular-nums}
+.tag{font-size:10.5px;border:1px solid var(--line2);border-radius:5px;padding:0 5px;color:var(--mut);white-space:nowrap}
+.tag.kc{color:#32d74b;border-color:#32d74b66}.tag.conf{color:#64d2ff;border-color:#64d2ff55}
+.tag.rev{color:#ff9f0a;border-color:#ff9f0a66}.tag.none{color:var(--dim)}
+#mapwrap{position:relative}#map{position:absolute;inset:0;background:#e9e7e2}
+.leaflet-tile{filter:grayscale(1) contrast(.92) brightness(1.04) opacity(.55)}
+#hint{position:absolute;top:10px;left:10px;z-index:900;background:rgba(13,16,19,.92);border:1px solid var(--line2);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--mut);max-width:340px}
+#hint b{color:var(--tx)}
+.note{padding:10px 14px;color:var(--dim);font-size:11.5px;border-top:1px solid var(--line);line-height:1.6}
+@media(max-width:900px){#app{grid-template-columns:1fr;grid-template-rows:auto 45vh 1fr}}
+</style></head><body>
+<div id=app>
+<header><h1>Threshold <span>explorer</span></h1>
+<div id=ctl>flip when CSDI ≥ <input id=thr type=range min=2 max=15 step=0.5 value=3> <b id=thv class=mono>3.0</b> km longer than pfaedle
+<span id=count></span></div>
+</header>
+<div id=list><table><thead><tr><th>route</th><th>dir</th><th class=mono>csdi</th><th class=mono>pf</th><th class=mono>Δ km</th><th>evidence we hold</th></tr></thead><tbody id=tb></tbody></table>
+<div class=note><b>What this answers:</b> which route-dirs a pure length threshold would flip from CSDI to
+pfaedle. Rows with a green/blue tag are defects we can already prove (byte-identical stamp across routes,
+and/or KMB's own line refutes CSDI). Untagged rows are <b>unproven</b> — flipping them wholesale imports
+pfaedle's own failure modes (terminal approaches, stop-dragging), i.e. the 07-13 regression class.
+Click a row: CSDI in red, pfaedle in green.</div></div>
+<div id=mapwrap><div id=map></div><div id=hint>Click a row to compare · <span style="color:var(--a)">■</span> CSDI <span style="color:var(--b)">■</span> pfaedle</div></div>
+</div>
+<script>
+const ORACLE = "https://hkbus-oracle.evnchn.io/data";
+const map = L.map('map').setView([22.35,114.12],11);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19}).addTo(map);
+let layers = [];
+function tagCls(t){ if(!t) return "none"; if(t.startsWith("KC")) return "kc"; if(t.startsWith("review")) return "rev"; return "conf"; }
+fetch("delta_data.json").then(r=>r.json()).then(D=>{
+  const tb = document.getElementById("tb"), thr = document.getElementById("thr");
+  function render(){
+    const t = +thr.value*1000;
+    document.getElementById("thv").textContent = (+thr.value).toFixed(1);
+    const rows = D.filter(r=>r.delta>=t);
+    const tagged = rows.filter(r=>r.tag).length;
+    document.getElementById("count").innerHTML = `→ flips <b>${rows.length}</b> route-dirs (<b>${tagged}</b> with defect evidence, <b>${rows.length-tagged}</b> unproven)`;
+    tb.innerHTML = "";
+    rows.forEach(r=>{
+      const tr = document.createElement("tr"); tr.className="row";
+      tr.innerHTML = `<td><span class="rno ${(r.agency||"").split("+")[0]}">${r.route}</span></td>
+        <td>${r.file.includes("-O")?"O":"I"}</td>
+        <td class=mono>${(r.len_cs/1000).toFixed(1)}</td><td class=mono>${(r.len_pf/1000).toFixed(1)}</td>
+        <td class=mono><b>${(r.delta/1000).toFixed(1)}</b></td>
+        <td><span class="tag ${tagCls(r.tag)}">${r.tag||"no evidence yet"}</span></td>`;
+      tr.onclick = async ()=>{
+        document.querySelectorAll("tr.sel").forEach(x=>x.classList.remove("sel")); tr.classList.add("sel");
+        layers.forEach(l=>map.removeLayer(l)); layers=[];
+        for (const [src,color,w] of [["csdi","#ff453a",3],["pf","#32d74b",4]]){
+          try{
+            const g = (await (await fetch(`${ORACLE}/${src}/${r.file}`)).json()).features[0].geometry;
+            const parts = g.type==="LineString"?[g.coordinates]:g.coordinates;
+            parts.forEach(p=>{
+              const pl = L.polyline(p.map(c=>[c[1],c[0]]),{color,weight:w,opacity:.85,dashArray:src==="csdi"?"6 5":null}).addTo(map);
+              layers.push(pl);
+            });
+          }catch(e){}
+        }
+        if(layers.length) map.fitBounds(L.featureGroup(layers).getBounds().pad(0.08));
+      };
+      tb.appendChild(tr);
+    });
+  }
+  thr.oninput = render;
+  render();
+});
+</script>
+</body></html>
