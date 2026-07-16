@@ -106,7 +106,7 @@ fetch("heal_spans.json").then(r=>r.json()).then(D=>{
           n=+document.getElementById("nsel").value;
     const s=document.getElementById("ssel").value;
     let rows = D.filter(r =>
-      (s==="all"||(r.status==="review"?"review":"patched")===s) &&
+      (s==="all"||r.status===s) &&
       (document.getElementById("tsel").value==="all"||r.tier===document.getElementById("tsel").value) &&
       (w==="all"||r.why===w) && (a==="all"||AG(r.agency)===a) &&
       (o==="all" || (o==="none" ? !r.oracle : /A=(\d+) B=(\d+)/.test(r.oracle||"") && (m=>+m[2]<+m[1]-5)(/A=(\d+) B=(\d+)/.exec(r.oracle)))) &&
@@ -116,6 +116,7 @@ fetch("heal_spans.json").then(r=>r.json()).then(D=>{
     rows.slice(0,n).forEach(r=>{
       const c=document.createElement("div"); c.className="card";
       if(r.status==="review") c.style.borderColor="#ff9f0a88";
+      if(r.status==="candidate") c.style.opacity=".82";
       const om = /A=(\d+) B=(\d+)/.exec(r.oracle||"");
       const otxt = om ? (+om[2] < +om[1]-5
           ? `<span class=ok>✓ KMB line: patch ${om[2]} m vs CSDI ${om[1]} m</span>`
