@@ -40,6 +40,7 @@ a{color:#5eb1ff}
  <span><i style="display:inline-block;width:16px;height:4px;border-radius:2px;background:var(--b)"></i> patch (OSM-matched)</span>
  <label>type <select id=wsel><option value=all>all</option><option>loop</option><option>circuit</option></select></label>
  <label>company <select id=asel><option value=all>all</option></select></label>
+ <label>status <select id=ssel><option value=all>all</option><option value=patched selected>patched</option><option value=review>review (not applied)</option></select></label>
  <label>oracle <select id=osel><option value=all>all</option><option value=conf>confirmed better</option><option value=none>no oracle</option></select></label>
  <input type=search id=q placeholder="route…" size=8>
  <label>top <select id=nsel><option>60</option><option>150</option><option value=99999>all</option></select> by km removed</label>
@@ -54,8 +55,10 @@ validated 26/26 vs KMB with 0 false positives) or a grossly inflated wrong circu
 (<span class=tag>circuit</span>, ≥3× the road alternative and ≥800 m excess). The patch is the OSM
 map-matched path for that segment only, and is applied only if it passes road/turn QC itself; where the
 operator's own line (KMB/LWB search API) exists, a patch that disagrees with it is vetoed.
-Everything not shown here is byte-identical CSDI — routes whose geometry can't be decomposed safely are left
-untouched by design.
+Routes with no patch are untouched CSDI, bit for bit; within a patched route only the defective segments
+change. Routes whose geometry can't be decomposed safely are skipped by design. Suspected wrong-circuits
+that lack both the self-overlap signature and an operator line to confirm them are <b>held for review</b>
+(shown amber here) and NOT applied — precision over recall.
 <br><br><b>Maintenance profile: one-off.</b> The patch set is a static artifact; no recurring human effort.
 Each patch is keyed to the defect it fixes, so if a future CSDI release fixes the defect upstream, the patch
 retires itself.
@@ -63,18 +66,20 @@ retires itself.
 <script>
 const AG = a => (a||"").split("+")[0];
 fetch("heal_spans.json").then(r=>r.json()).then(D=>{
-  const routes = new Set(D.map(r=>r.file));
-  const km = D.reduce((s,r)=>s+r.saved_m,0)/1000;
+  const P = D.filter(r=>r.status!=="review");
+  const routes = new Set(P.map(r=>r.file));
+  const km = P.reduce((s,r)=>s+r.saved_m,0)/1000;
   let conf=0, tie=0, none=0;
-  D.forEach(r=>{
+  P.forEach(r=>{
     const m = /A=(\d+) B=(\d+)/.exec(r.oracle||"");
     if(!m) none++;
     else if(+m[2] < +m[1]-5) conf++;
     else tie++;
   });
   document.getElementById("stats").innerHTML =
-    `<b>${routes.size}</b> route-dirs healed · <b>${D.length}</b> segments · <b>${km.toFixed(0)} km</b> of bogus geometry removed · ` +
-    `operator-line check: <b style="color:var(--b)">${conf} better</b> / ${tie} tie / <b>0 worse</b> / ${none} no oracle`;
+    `<b>${routes.size}</b> route-dirs healed · <b>${P.length}</b> segments patched · <b>${km.toFixed(0)} km</b> of bogus geometry removed · ` +
+    `operator-line check: <b style="color:var(--b)">${conf} better</b> / ${tie} tie / <b>0 worse</b> / ${none} no oracle · ` +
+    `<b>${D.length-P.length}</b> suspects held for review (not applied)`;
   const asel = document.getElementById("asel");
   [...new Set(D.map(r=>AG(r.agency)))].sort().forEach(a=>{const o=document.createElement("option");o.textContent=a;asel.appendChild(o);});
   const grid = document.getElementById("grid");
@@ -85,7 +90,9 @@ fetch("heal_spans.json").then(r=>r.json()).then(D=>{
           o=document.getElementById("osel").value,
           q=document.getElementById("q").value.trim().toUpperCase(),
           n=+document.getElementById("nsel").value;
+    const s=document.getElementById("ssel").value;
     let rows = D.filter(r =>
+      (s==="all"||(r.status==="review"?"review":"patched")===s) &&
       (w==="all"||r.why===w) && (a==="all"||AG(r.agency)===a) &&
       (o==="all" || (o==="none" ? !r.oracle : /A=(\d+) B=(\d+)/.test(r.oracle||"") && (m=>+m[2]<+m[1]-5)(/A=(\d+) B=(\d+)/.exec(r.oracle)))) &&
       (!q || r.route.toUpperCase()===q || r.route.toUpperCase().startsWith(q)));
@@ -93,12 +100,14 @@ fetch("heal_spans.json").then(r=>r.json()).then(D=>{
     document.getElementById("cnt").textContent = `${Math.min(n,rows.length)} of ${rows.length} shown`;
     rows.slice(0,n).forEach(r=>{
       const c=document.createElement("div"); c.className="card";
+      if(r.status==="review") c.style.borderColor="#ff9f0a88";
       const om = /A=(\d+) B=(\d+)/.exec(r.oracle||"");
       const otxt = om ? (+om[2] < +om[1]-5
           ? `<span class=ok>✓ KMB line: patch ${om[2]} m vs CSDI ${om[1]} m</span>`
           : `<span>KMB line: ~tie (${om[1]}/${om[2]} m)`+"</span>")
         : `<span class=na>no operator line (visual check welcome)</span>`;
-      c.innerHTML = `<div class=chd><span class="rno ${AG(r.agency)}">${r.route}</span>
+      const rev = r.status==="review" ? `<span class=tag style="color:#ff9f0a;border-color:#ff9f0a88">REVIEW · not applied</span>` : "";
+      c.innerHTML = `<div class=chd><span class="rno ${AG(r.agency)}">${r.route}</span>${rev}
         <span class=meta>${r.dir==="O"?"outbound":"inbound"} · ${r.from} → ${r.to}</span>
         <span class=saved>−${(r.saved_m/1000).toFixed(1)} km</span></div>
         <div class=map></div>
@@ -112,7 +121,7 @@ fetch("heal_spans.json").then(r=>r.json()).then(D=>{
       maps.push(map);
     });
   }
-  ["wsel","asel","osel","nsel"].forEach(id=>document.getElementById(id).onchange=render);
+  ["ssel","wsel","asel","osel","nsel"].forEach(id=>document.getElementById(id).onchange=render);
   document.getElementById("q").oninput=render;
   render();
 });
